@@ -323,7 +323,7 @@ def test_translations_complete_and_consistent():
 
 def test_manifest():
     m = json.loads((PKG / "manifest.json").read_text(encoding="utf-8"))
-    assert m["domain"] == "itrend_player" and m["version"] == "0.1.0"
+    assert m["domain"] == "itrend_player" and m["version"] == "0.1.1"
     assert m["config_flow"] is True and m["integration_type"] == "device"
     assert m["iot_class"] == "local_push" and m["requirements"] == []
     assert m["dependencies"] == ["webhook", "http"]
@@ -361,3 +361,60 @@ async def test_unpaired_device_never_checks_with_empty_key(hass, env):
     resp = await device._handle(Req())
     assert resp.status == 401
     assert hmac.new(b"", b"x", hashlib.sha256)  # (leerer Schluessel waere rechnerisch moeglich)
+
+
+async def test_allow_remote_option_reregisters_webhook(hass, env):
+    from homeassistant.data_entry_flow import FlowResultType
+    entry, _d, app, _c, _i, _s = env
+    assert hass.data["webhook"][app.webhook_id]["local_only"] is True
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] == FlowResultType.FORM
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], {"allow_remote": True})
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    await hass.async_block_till_done()
+    assert entry.state is ConfigEntryState.LOADED
+    assert entry.runtime_data.allow_remote is True
+    assert hass.data["webhook"][app.webhook_id]["local_only"] is False
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    await hass.config_entries.options.async_configure(result["flow_id"], {"allow_remote": False})
+    await hass.async_block_till_done()
+    assert hass.data["webhook"][app.webhook_id]["local_only"] is True
+
+
+async def test_nonlocal_sender_gets_empty_200_unless_allowed(hass, hass_client_no_auth, vectors):
+    """HA Core verwirft nicht-lokale Absender bei local_only mit leerem 200 (Hairpin-NAT)."""
+    from unittest.mock import patch
+    from homeassistant.setup import async_setup_component
+    assert await async_setup_component(hass, "media_player", {})
+    entry = entry_from_vectors(vectors)
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    client = await hass_client_no_auth()
+    app = VectorApp(vectors)
+    body = app.body(1, {"v": 1, "type": "state", "rev": 1, "status": "idle"})
+    with patch("homeassistant.util.network.is_local", return_value=False):
+        resp = await app.post(client, body)
+        assert resp.status == 200 and await resp.read() == b""
+        assert entry.runtime_data.last_seq == 0
+        await _set_remote(hass, entry, True)
+        resp = await app.post(client, body)
+        assert (await resp.json())["ok"] is True
+
+
+async def test_remote_pairing_creates_hint_and_option_clears_it(hass, vectors):
+    entry = entry_from_vectors(vectors, paired_from_remote=True)
+    entry.add_to_hass(hass)
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    issue_id = f"remote_source_{entry.entry_id}"
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is not None
+    await _set_remote(hass, entry, True)
+    assert ir.async_get(hass).async_get_issue(DOMAIN, issue_id) is None
+
+
+async def _set_remote(hass, entry, value):
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    await hass.config_entries.options.async_configure(result["flow_id"], {"allow_remote": value})
+    await hass.async_block_till_done()

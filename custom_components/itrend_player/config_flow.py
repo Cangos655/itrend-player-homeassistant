@@ -7,7 +7,8 @@ import logging
 from collections.abc import Mapping
 from typing import Any
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+import voluptuous as vol
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.network import NoURLAvailableError, get_url
@@ -22,11 +23,14 @@ from .const import (
     CONF_K_H2A,
     CONF_NAME,
     CONF_PLATFORM,
+    CONF_REMOTE_PAIRED,
     CONF_UNPAIRED,
     CONF_WEBHOOK_ID,
     DOMAIN,
     ISSUE_KEY_COPIED,
+    ISSUE_REMOTE_HINT,
     ISSUE_UNPAIRED,
+    OPT_ALLOW_REMOTE,
     STORAGE_VERSION,
 )
 from .pairing import ActiveCode, FailureReason, PairingBlocked, PairingManager, PairingResult
@@ -54,6 +58,11 @@ class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
     """Kopplung neuer Fernseher und Erneuerung bestehender Kopplungen."""
 
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> ITrendOptionsFlow:
+        return ITrendOptionsFlow()
 
     def __init__(self) -> None:
         self._active: ActiveCode | None = None
@@ -142,10 +151,11 @@ class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
             CONF_PLATFORM: result.platform,
             CONF_APP_VERSION: result.app_version,
             CONF_UNPAIRED: False,
+            CONF_REMOTE_PAIRED: result.remote,
         }
         if self.source == "reauth":
             entry = self._get_reauth_entry()
-            for template in (ISSUE_UNPAIRED, ISSUE_KEY_COPIED):
+            for template in (ISSUE_UNPAIRED, ISSUE_KEY_COPIED, ISSUE_REMOTE_HINT):
                 ir.async_delete_issue(self.hass, DOMAIN, template.format(entry_id=entry.entry_id))
             # Neue Kopplung = neue Sequenz ab 1: alte Reservierung verwerfen.
             await Store(self.hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}").async_remove()
@@ -163,3 +173,16 @@ class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
             self._manager.async_close_code(self._active)
         if self._task is not None and not self._task.done():
             self._task.cancel()
+
+
+class ITrendOptionsFlow(OptionsFlowWithReload):
+    """Option: Meldungen auch von ausserhalb des Heimnetzes annehmen (laedt den Eintrag neu)."""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if user_input is not None:
+            return self.async_create_entry(data={OPT_ALLOW_REMOTE: bool(user_input[OPT_ALLOW_REMOTE])})
+        current = self.config_entry.options.get(OPT_ALLOW_REMOTE, False)
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({vol.Required(OPT_ALLOW_REMOTE, default=current): bool}),
+        )

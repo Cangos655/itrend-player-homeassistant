@@ -13,7 +13,7 @@ from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.typing import ConfigType
 
-from .const import DOMAIN, ISSUE_KEY_COPIED, ISSUE_UNPAIRED, STORAGE_VERSION
+from .const import DOMAIN, ISSUE_KEY_COPIED, ISSUE_REMOTE_HINT, ISSUE_UNPAIRED, STORAGE_VERSION
 from .device import ITrendDevice, RateLimiters
 from .pairing import PairingManager
 from .views import async_register_views
@@ -57,7 +57,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ITrendConfigEntry) -> b
 async def async_remove_entry(hass: HomeAssistant, entry: ITrendConfigEntry) -> None:
     """Eintrag geloescht: Geheimnis (Config-Entry) und Sequenzspeicher entfernen."""
     await Store(hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}").async_remove()
-    for template in (ISSUE_UNPAIRED, ISSUE_KEY_COPIED):
+    for template in (ISSUE_UNPAIRED, ISSUE_KEY_COPIED, ISSUE_REMOTE_HINT):
         ir.async_delete_issue(hass, DOMAIN, template.format(entry_id=entry.entry_id))
 
 

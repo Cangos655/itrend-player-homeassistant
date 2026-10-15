@@ -41,6 +41,7 @@ from .const import (
     CONF_K_H2A,
     CONF_NAME,
     CONF_PLATFORM,
+    CONF_REMOTE_PAIRED,
     CONF_UNPAIRED,
     CONF_WEBHOOK_ID,
     DEVICE_RATE_LIMIT,
@@ -48,8 +49,10 @@ from .const import (
     DOMAIN,
     EVENT_ITREND,
     ISSUE_KEY_COPIED,
+    ISSUE_REMOTE_HINT,
     ISSUE_UNPAIRED,
     MANUFACTURER,
+    OPT_ALLOW_REMOTE,
     PLATFORM_MODELS,
     SEQ_RESERVE_AHEAD,
     STORAGE_VERSION,
@@ -147,6 +150,15 @@ class ITrendDevice:
             sw_version=self.state.app_version,
         )
         self.registry_device_id = device.id
+        self.allow_remote: bool = bool(self.entry.options.get(OPT_ALLOW_REMOTE, False))
+        hint_id = ISSUE_REMOTE_HINT.format(entry_id=self.entry.entry_id)
+        if self.entry.data.get(CONF_REMOTE_PAIRED) and not self.allow_remote:
+            ir.async_create_issue(
+                self.hass, DOMAIN, hint_id, is_fixable=False, severity=ir.IssueSeverity.WARNING,
+                translation_key="remote_source", translation_placeholders={"name": self.name},
+            )
+        else:
+            ir.async_delete_issue(self.hass, DOMAIN, hint_id)
         if self.paired:
             webhook.async_register(
                 self.hass,
@@ -154,7 +166,7 @@ class ITrendDevice:
                 f"iTrend Player ({self.name})",
                 self.webhook_id,
                 self._handle_webhook,
-                local_only=True,
+                local_only=not self.allow_remote,
                 allowed_methods=["POST"],
             )
             _LOGGER.debug("Webhook %s... registered for %s", _short(self.webhook_id), self.name)

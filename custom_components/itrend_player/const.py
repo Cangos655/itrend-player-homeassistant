@@ -17,6 +17,8 @@ CONF_NAME: Final = "name"
 CONF_PLATFORM: Final = "platform"
 CONF_APP_VERSION: Final = "app_version"
 CONF_UNPAIRED: Final = "unpaired"
+CONF_REMOTE_PAIRED: Final = "paired_from_remote"
+OPT_ALLOW_REMOTE: Final = "allow_remote"
 
 EVENT_ITREND: Final = "itrend_player_event"
 
@@ -55,6 +57,7 @@ AVAILABILITY_TIMEOUT: Final = timedelta(seconds=HEARTBEAT_INTERVAL * MISSED_HEAR
 STORAGE_VERSION: Final = 1
 
 ISSUE_UNPAIRED: Final = "unpaired_by_app_{entry_id}"
+ISSUE_REMOTE_HINT: Final = "remote_source_{entry_id}"
 ISSUE_KEY_COPIED: Final = "key_possibly_copied_{entry_id}"
 
 PLATFORM_MODELS: Final = {

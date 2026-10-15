@@ -55,6 +55,21 @@
     "key_possibly_copied": {
       "title": "Kopplungsschlüssel möglicherweise kopiert",
       "description": "Meldungen von {name} trafen mit Sequenznummern ein, die vermuten lassen, dass derselbe Schlüssel auf zwei Geräten läuft (zum Beispiel eine eingespielte Sicherung). Entfernen Sie den Eintrag und koppeln Sie den Fernseher neu."
+    },
+    "remote_source": {
+      "title": "Meldungen kommen von außerhalb des Heimnetzes",
+      "description": "Die Kopplung von {name} kam von einer nicht lokalen Adresse. Meldet die App 'nicht bestätigt (empty_body)', verwirft Home Assistant diese Meldungen. Öffnen Sie die Integration, wählen Sie Konfigurieren und aktivieren Sie 'Auch Anfragen von außerhalb des Heimnetzes erlauben'."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Netzwerkzugriff",
+        "description": "Normalerweise werden nur Meldungen aus dem Heimnetz angenommen. Aktivieren Sie das, wenn der Fernseher Home Assistant über Domainnamen, Proxy oder Hairpin-NAT erreicht (der Absender erscheint dann als öffentliche Adresse). Anzeichen in der App: 'nicht bestätigt (empty_body)'. Die Sicherheit ändert sich kaum: Jede Meldung ist signiert, Sequenznummern und Rate-Limits gelten weiter.",
+        "data": {
+          "allow_remote": "Auch Anfragen von außerhalb des Heimnetzes erlauben"
+        }
+      }
     }
   }
 }

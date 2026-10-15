@@ -55,6 +55,21 @@
     "key_possibly_copied": {
       "title": "Eşleştirme anahtarı kopyalanmış olabilir",
       "description": "{name} için gelen iletilerin sıra numaraları aynı anahtarın iki cihazda kullanıldığını düşündürüyor (örneğin geri yüklenen bir yedek). Girişi kaldırın ve TV'yi yeniden eşleştirin."
+    },
+    "remote_source": {
+      "title": "İletiler ev ağı dışından geliyor",
+      "description": "{name} eşleştirmesi yerel olmayan bir adresten geldi. Uygulama 'doğrulanmadı (empty_body)' bildiriyorsa Home Assistant bu iletileri atar. Entegrasyonu açın, Yapılandır'ı seçin ve 'Ev ağı dışından gelen isteklere de izin ver' seçeneğini etkinleştirin."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ağ erişimi",
+        "description": "Normalde yalnızca ev ağınızdan gelen iletiler kabul edilir. TV, Home Assistant'a alan adı, proxy veya hairpin NAT üzerinden ulaşıyorsa bunu etkinleştirin (gönderen genel bir adres olarak görünür). Uygulamadaki belirti: 'doğrulanmadı (empty_body)'. Güvenlik neredeyse değişmez: her ileti imzalıdır, sıra numaraları ve hız sınırları geçerlidir.",
+        "data": {
+          "allow_remote": "Ev ağı dışından gelen isteklere de izin ver"
+        }
+      }
     }
   }
 }

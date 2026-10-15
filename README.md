@@ -30,6 +30,8 @@ Ohne HACS: den Ordner `custom_components/itrend_player` in das Verzeichnis `conf
 
 **Löschen:** Gerät oder Eintrag in Home Assistant löschen entfernt Webhook und Schlüssel. Die App meldet danach „Kopplung erneuern“ und kann getrennt werden.
 
+**Netzwerkzugriff (Option):** Normalerweise nimmt die Integration nur Meldungen aus dem Heimnetz an. Erreicht der Fernseher Home Assistant über einen Domainnamen, Proxy oder Hairpin-NAT (Absender erscheint als öffentliche Adresse), beantwortet Home Assistant die Meldungen mit leerem Body; die App zeigt „nicht bestätigt (`empty_body`)“ und „App aktiv“ bleibt aus. Dann am Eintrag **Konfigurieren > Auch Anfragen von außerhalb des Heimnetzes erlauben** einschalten. Die Sicherheit ändert sich kaum, da jede Meldung signiert ist und Sequenznummern und Rate-Limits weiter gelten.
+
 ### Entitäten (je Fernseher)
 
 | Entität | Inhalt |
@@ -88,6 +90,8 @@ Without HACS: copy the folder `custom_components/itrend_player` into `config/cus
 **Renew pairing:** if the app ended the pairing or it is no longer valid, Home Assistant offers **Reconfigure / Renew pairing** on the entry. Entities and history are kept.
 
 **Delete:** deleting the device or entry removes the webhook and the key. The app will then show "renew pairing" and can be disconnected.
+
+**Network access (option):** By default the integration only accepts messages from your home network. If the TV reaches Home Assistant through a domain name, proxy or hairpin NAT (the sender appears as a public address), Home Assistant answers with an empty body; the app shows "unconfirmed (`empty_body`)" and "App active" stays off. Then enable **Configure > Also allow requests from outside the home network** on the entry. Security hardly changes because every message is signed and sequence numbers and rate limits still apply.
 
 ### Entities (per TV)
 

@@ -14,10 +14,12 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
+from ipaddress import ip_address
 from typing import Any
 
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.event import async_call_later
+from homeassistant.util import network as network_util
 
 from . import protocol as proto
 from .const import (
@@ -69,6 +71,7 @@ class PairingResult:
     name: str
     platform: str
     app_version: str
+    remote: bool = False  # Kopplung kam von einer nicht-lokalen Quelladresse
 
 
 @dataclass
@@ -97,6 +100,13 @@ class ActiveCode:
     @property
     def display_code(self) -> str:
         return f"{self.code[:3]} {self.code[3:]}"
+
+
+def _is_local(source: str) -> bool:
+    try:
+        return network_util.is_local(ip_address(source))
+    except ValueError:
+        return False
 
 
 def _err(status: int, code: str, **extra: Any) -> Reply:
@@ -355,6 +365,7 @@ class PairingManager:
             name=name,
             platform=platform,
             app_version=app_version,
+            remote=not _is_local(source),
         )
         active.closed = True
         active.attempts.clear()

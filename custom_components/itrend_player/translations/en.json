@@ -55,6 +55,21 @@
     "key_possibly_copied": {
       "title": "Pairing key possibly copied",
       "description": "Messages for {name} arrived with sequence numbers that suggest the same key is used on two devices (for example a restored backup). Remove the entry and pair the TV again."
+    },
+    "remote_source": {
+      "title": "Messages arrive from outside the home network",
+      "description": "The pairing of {name} came from a non-local address. If the app reports 'unconfirmed (empty_body)', Home Assistant drops those messages. Open the integration, select Configure and enable 'Also allow requests from outside the home network'."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Network access",
+        "description": "Normally only messages from your home network are accepted. Enable this if the TV reaches Home Assistant through a domain name, proxy or hairpin NAT (the sender then appears as a public address). Symptom in the app: 'unconfirmed (empty_body)'. This hardly changes security: every message is signed, and sequence numbers and rate limits still apply.",
+        "data": {
+          "allow_remote": "Also allow requests from outside the home network"
+        }
+      }
     }
   }
 }
