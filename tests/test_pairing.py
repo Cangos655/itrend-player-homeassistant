@@ -191,6 +191,7 @@ async def test_rate_limit_per_source(env):
     assert codes[:10].count(429) == 0
     assert codes[10:] == [429, 429]
     assert int(resp.headers["Retry-After"]) >= 1
+    assert (await resp.json())["retry_after"] == int(resp.headers["Retry-After"])
     assert resp.headers["Access-Control-Allow-Origin"] == "*"
     clock.advance(61)
     assert (await post(client, START, {"v": 1})).status == 200

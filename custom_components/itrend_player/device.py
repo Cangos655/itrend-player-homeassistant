@@ -221,7 +221,10 @@ class ITrendDevice:
 
     @staticmethod
     def _error(status: int, code: str, **extra: Any) -> web.Response:
-        headers = {"Retry-After": str(extra.pop("retry_after"))} if "retry_after" in extra else None
+        headers = None
+        if "retry_after" in extra:
+            extra["retry_after"] = max(1, int(extra["retry_after"]))
+            headers = {"Retry-After": str(extra["retry_after"])}
         return json_reply(status, {"ok": False, "error": code, **extra}, headers)
 
     async def _handle(self, request: web.Request) -> web.Response:

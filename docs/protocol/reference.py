@@ -65,7 +65,7 @@ def b64u(raw):
 
 def b64u_dec(s):
     """Streng: kein Padding, nur Alphabet, kanonisch (Restbits null)."""
-    if not isinstance(s, str) or not _B64RE.match(s) or len(s) % 4 == 1:
+    if not isinstance(s, str) or not _B64RE.fullmatch(s) or len(s) % 4 == 1:
         raise ValueError("bad base64url")
     raw = base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
     if b64u(raw) != s:
@@ -280,7 +280,7 @@ def validate_payload(o):
         return None
     if t == "heartbeat":
         av = o.get("app_version")
-        if not isinstance(av, str) or len(av) > 32 or not VERSION_RE.match(av):
+        if not isinstance(av, str) or len(av) > 32 or not VERSION_RE.fullmatch(av):
             return "app_version"
         if o.get("platform") not in ("android", "tizen"):
             return "platform"
@@ -294,7 +294,7 @@ def validate_payload(o):
                 return "sub"
             if "expires" in s and s["expires"] is not None:
                 e = s["expires"]
-                if not isinstance(e, str) or not re.match(r"^\d{4}-\d{2}-\d{2}$", e):
+                if not isinstance(e, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", e):
                     return "sub_expires"
                 try:
                     datetime.date.fromisoformat(e)
@@ -306,7 +306,7 @@ def validate_payload(o):
         return None
     if t == "event":
         name = o.get("name")
-        if not isinstance(name, str) or not re.match(r"^[a-z_]{1,32}$", name):
+        if not isinstance(name, str) or not re.fullmatch(r"[a-z_]{1,32}", name):
             return "name"
         if name not in EVENTS:
             return None  # unbekannte Ereignisse: annehmen und ignorieren
@@ -334,12 +334,17 @@ def _no_dupes(pairs):
     return d
 
 
-def receive(body, webhook_id, dev):
+def receive(body, webhook_id, dev, content_type="text/plain;charset=UTF-8"):
     """Referenzverhalten der Integration. dev: dict mit device_id, key_a2h,
     key_h2a (bytes), last_seq, ha_state_rev. Veraendert dev bei Annahme."""
     path = "/api/webhook/" + webhook_id
+    # Reihenfolge: Groesse, Content-Type, Aufbau, Format, Signatur (OHNE Geraete-Lock,
+    # damit ohne Schluessel niemand den Lock halten kann), dann erst im Lock:
+    # seq pruefen, Reservierung speichern, last_seq setzen.
     if len(body) > MAX_BODY:
         return {"http": 413, "code": "payload_too_large"}
+    if content_type.split(";")[0].strip().lower() != "text/plain":
+        return {"http": 400, "code": "bad_request"}
     parts = body.split(b"\n", 4)
     if len(parts) != 5:
         return {"http": 400, "code": "bad_request"}
@@ -349,10 +354,10 @@ def receive(body, webhook_id, dev):
         return {"http": 400, "code": "bad_request"}
     payload = parts[4]
     if magic != "ITP/1":
-        if re.match(r"^ITP/[0-9]+$", magic):
+        if re.fullmatch(r"ITP/[0-9]+", magic):
             return {"http": 400, "code": "unsupported_version"}
         return {"http": 400, "code": "bad_request"}
-    if not re.match(r"^(0|[1-9][0-9]{0,15})$", seq_s) or not 1 <= int(seq_s) <= MAX_SEQ:
+    if not re.fullmatch(r"0|[1-9][0-9]{0,15}", seq_s) or not 1 <= int(seq_s) <= MAX_SEQ:
         return {"http": 400, "code": "bad_request"}
     seq = int(seq_s)
     try:
@@ -399,7 +404,7 @@ B43 = re.compile(r"^[A-Za-z0-9_-]{43}$")
 
 def fmt22(x):
     """Genau 22 Zeichen base64url, kanonisch (16 Byte)."""
-    if not isinstance(x, str) or not B22.match(x):
+    if not isinstance(x, str) or not B22.fullmatch(x):
         return False
     try:
         return len(b64u_dec(x)) == 16
@@ -408,7 +413,7 @@ def fmt22(x):
 
 
 def fmt43(x):
-    if not isinstance(x, str) or not B43.match(x):
+    if not isinstance(x, str) or not B43.fullmatch(x):
         return False
     try:
         return len(b64u_dec(x)) == 32
@@ -521,7 +526,7 @@ def build_vectors():
     v["encodings"] = {
         "valid": [{"hex": h, "b64u": b64u(bytes.fromhex(h))}
                   for h in ("", "00", "0001", "000102", "fffefd", "00010203")],
-        "invalid_b64u": ["AA==", "A", "AB", "a+b/", "ab c", "ab\n", "AAA=" ],
+        "invalid_b64u": ["AA==", "A", "AB", "a+b/", "ab c", "ab\n", "AAAA\n", "AAA=" ],
         "note": "AB hat nichtkanonische Restbits und ist ungueltig; A hat unmoegliche Laenge.",
     }
     v["length_prefix"] = {
@@ -639,16 +644,18 @@ def build_vectors():
     st_extra = dict(p_state_idle, future_field=True)
     unpair = {"v": 1, "type": "unpair"}
 
-    def case(name, desc, last_seq, ha_rev, body, extra=None):
+    def case(name, desc, last_seq, ha_rev, body, extra=None, ctype=None):
         dev = {"device_id": device_id, "key_a2h": key_a2h, "key_h2a": key_h2a,
                "last_seq": last_seq, "ha_state_rev": ha_rev}
-        res = receive(body, webhook_id, dev)
+        res = receive(body, webhook_id, dev, **(ctype or {}))
         c = {"name": name, "description": desc, "last_seq_before": last_seq,
              "ha_state_rev_before": ha_rev, "body": body.decode("utf-8"),
              "expect": {k: res[k] for k in res if k != "proof"},
              "last_seq_after": dev["last_seq"]}
         if "proof" in res:
             c["expect"]["proof"] = res["proof"]
+        if ctype:
+            c["content_type"] = ctype["content_type"]
         if extra:
             c.update(extra)
         return c
@@ -697,6 +704,12 @@ def build_vectors():
     dup = build_body(key_a2h, path, device_id, 48,
                      b'{"v":1,"type":"heartbeat","app_version":"0.3.0","platform":"tizen","state_rev":1,"state_rev":2}')
     cases.append(case("duplicate_json_key", "Doppelter JSON-Schluessel: 422", 47, 8, dup))
+    cases.append(case("wrong_content_type", "Content-Type application/json am Webhook: 400, Sequenz nicht verbraucht",
+                      47, 8, good(48, p_state), ctype={"content_type": "application/json"}))
+    cases.append(case("content_type_charset_ok", "text/plain mit Parameter ist erlaubt",
+                      47, 8, good(48, p_state_idle), ctype={"content_type": "Text/Plain; charset=utf-8"}))
+    cases.append(case("heartbeat_after_restart", "ha_state_rev unbekannt (null) nach HA-Neustart: erster heartbeat gibt resync",
+                      47, None, good(48, p_hb)))
     cases.append(case("too_large", "Body ueber 4096 Byte", 47, 8, b"ITP/1\n" + b"x" * 4100))
     v["webhook"] = {
         "device_id": device_id, "webhook_id": webhook_id, "path": path,
@@ -746,6 +759,9 @@ def build_vectors():
         vc("event_reason_on_wrong_event_bad", {"v": 1, "type": "event", "name": "channel_changed", "reason": "ended"}),
         vc("event_name_uppercase_bad", {"v": 1, "type": "event", "name": "PlaybackStarted"}),
         vc("event_unknown_name_ok", ev_unknown),
+        vc("event_name_trailing_lf_bad", {"v": 1, "type": "event", "name": "playback_started\n"}),
+        vc("heartbeat_version_trailing_lf_bad", dict(p_hb, app_version="0.3.0\n")),
+        vc("heartbeat_expires_trailing_lf_bad", dict(p_hb, sub={"expires": "2027-03-31\n"})),
         vc("unknown_type_ignored", {"v": 1, "type": "future"}),
         vc("not_an_object", [1, 2]),
     ]
@@ -880,7 +896,8 @@ def check():
         dev = {"device_id": wh["device_id"], "key_a2h": bytes.fromhex(wh["K_a2h_hex"]),
                "key_h2a": bytes.fromhex(wh["K_h2a_hex"]), "last_seq": c["last_seq_before"],
                "ha_state_rev": c["ha_state_rev_before"]}
-        res = receive(c["body"].encode("utf-8"), wh["webhook_id"], dev)
+        res = receive(c["body"].encode("utf-8"), wh["webhook_id"], dev,
+                      content_type=c.get("content_type", "text/plain;charset=UTF-8"))
         expect(res == c["expect"], "webhook-Fall " + c["name"])
         expect(dev["last_seq"] == c["last_seq_after"], "last_seq nach " + c["name"])
         if "signing_input_hex" in c:

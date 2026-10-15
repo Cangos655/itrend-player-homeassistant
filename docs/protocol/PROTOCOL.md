@@ -126,7 +126,7 @@ HA → App `200`:
 | `salt` | string | 22 Zeichen (16 Byte) | `s` |
 | `B` | string | 512 Zeichen (384 Byte, `PAD(B)`) | `B = (k·v + g^b) mod N`, `b` neu je Versuch |
 
-HA merkt sich `(session, b, B)` höchstens **60 Sekunden** und höchstens 4 gleichzeitige offene Versuche insgesamt, davon **höchstens 2 je Quelladresse** (Befund 4; ist die Grenze je Adresse erreicht, fliegt der älteste Versuch *dieser* Adresse raus, nie der einer anderen). So kann ein einzelner Teilnehmer im Netz die Versuche anderer nicht verdrängen. Gibt es keinen aktiven Code (nie geöffnet, abgelaufen, verbraucht, gesperrt), antwortet HA `404 pairing_unavailable`.
+HA merkt sich `(session, b, B)` höchstens **60 Sekunden** und höchstens 4 gleichzeitige offene Versuche insgesamt, davon **höchstens 2 je Quelladresse** (Befund 4; ist die Grenze je Adresse erreicht, fliegt der älteste Versuch *dieser* Adresse raus, nie der einer anderen. Sind alle 4 Plätze belegt und die anfragende Adresse hat **weniger als 2** offene, bekommt sie `429 rate_limited` und **nichts Fremdes wird verdrängt**: Begründung: ein einzelner Teilnehmer darf die Versuche anderer weder verdrängen noch durch eigene ersetzen; belegte Plätze verfallen nach 60 s, die Störung ist zeitlich begrenzt). So kann ein einzelner Teilnehmer im Netz die Versuche anderer nicht verdrängen. Gibt es keinen aktiven Code (nie geöffnet, abgelaufen, verbraucht, gesperrt), antwortet HA `404 pairing_unavailable`.
 
 **Schritt 2: `POST /api/itrend_player/pair/finish`**
 
@@ -199,7 +199,7 @@ K_h2a = HKDF-Expand(PRK, "ITP1 ha-to-app" ‖ LP(device_id, webhook_id), 32)
 | Zu viele Anfragen | `429 rate_limited` (`Retry-After`) |
 | Body > 4096 Byte | `413 payload_too_large` |
 
-**Rate-Limit:** je Quelladresse höchstens **10 Anfragen pro Minute** an die Pairing-Endpunkte zusammen (zählt jede Anfrage, auch erfolgreiche); danach `429`. Zusätzlich: höchstens ein aktiver Code gleichzeitig; höchstens 2 offene Versuche je Quelladresse; zeitgleich laufende `pair/finish`-Berechnungen höchstens 2 (weitere warten oder bekommen `429`); nach 3 gesperrten Codes innerhalb von 10 Minuten SOLL HA die Kopplung 10 Minuten lang gar nicht anbieten. Hinter einem Reverse-Proxy ohne `X-Forwarded-For`-Auswertung sieht HA nur die Proxy-Adresse; das Limit wirkt dann für alle gemeinsam (bekannte Einschränkung).
+**Rate-Limit:** je Quelladresse höchstens **10 Anfragen pro Minute** an die Pairing-Endpunkte zusammen (zählt jede Anfrage, auch erfolgreiche); danach `429`. Zusätzlich: höchstens ein aktiver Code gleichzeitig; höchstens 2 offene Versuche je Quelladresse; zeitgleich laufende `pair/finish`-Berechnungen höchstens 2 (weitere bekommen `429`, ihr Versuch bleibt erhalten und zählt nicht als Fehlversuch); `OPTIONS` zählt nicht zum Rate-Limit; bei zwei gleichzeitig richtigen Beweisen gewinnt nur einer, der andere bekommt `404 pairing_unavailable`; nach 3 gesperrten Codes innerhalb von 10 Minuten SOLL HA die Kopplung 10 Minuten lang gar nicht anbieten. Hinter einem Reverse-Proxy ohne `X-Forwarded-For`-Auswertung sieht HA nur die Proxy-Adresse; das Limit wirkt dann für alle gemeinsam (bekannte Einschränkung).
 
 Antworten haben das Format `{"error":"<code>", …}` mit `Content-Type: application/json`.
 
@@ -251,7 +251,7 @@ ITP/1\n
 - `<device_id>`: 22 Zeichen base64url.
 - `<seq>`: Dezimalzahl, `1 ≤ seq ≤ 2^53−1` (9007199254740991, größte exakt in JS darstellbare Ganzzahl), ohne führende Null, höchstens 16 Ziffern.
 - `<sig>`: 43 Zeichen base64url (32 Byte).
-- `<payload>`: alles nach dem **vierten** LF bis zum Ende: JSON-Text (UTF-8, ein JSON-Objekt, kompakt). Er darf selbst keine rohen LF enthalten (JSON-Escapes `\n` sind erlaubt und normal).
+- `<payload>`: alles nach dem **vierten** LF bis zum Ende: JSON-Text (UTF-8, ein JSON-Objekt, kompakt). Sender SOLLEN keine rohen LF in die Nutzlast schreiben (JSON-Escapes `\n` sind normal); Empfänger akzeptieren sie, da die Nutzlast als signierte Rohbytes gilt.
 
 HA trennt mit `body.split(b"\n", 4)` und verlangt genau 5 Teile.
 
@@ -271,7 +271,7 @@ sig = base64url( HMAC-SHA256( K_a2h, signing_input ) )
 ### 4.3 Sequenznummer
 
 - Je Gerät eigene Zählung, beginnt bei 1 (erste Meldung nach Kopplung), **streng aufsteigend**; Lücken sind erlaubt, Wiederholung oder Rückschritt nicht. Es gibt **keine Zeitstempel** in der Prüfung (Uhren am Fernseher gehen falsch).
-- **HA**: speichert `last_seq` je Gerät. **Ein Sperrmechanismus je Gerät (Lock, Befund 2)** umschließt Prüfen von Signatur und `seq`, Speichern der Reservierung und Setzen von `last_seq` als eine Einheit; parallele Anfragen desselben Geräts laufen nacheinander, sonst könnten zwei gleichzeitige Meldungen dieselbe Sequenz verbrauchen oder `last_seq` zurücksetzen. Akzeptiert nur `seq > last_seq`, sonst `409 seq_too_low` (Details unten). Vor dem Lesen der Nutzlast wird `last_seq := seq` gesetzt: Die Sequenz ist mit gültiger Signatur **verbraucht**, auch wenn die Nutzlast danach `422` ergibt.
+- **HA**: speichert `last_seq` je Gerät. **Die Signatur wird VOR dem Geräte-Lock geprüft** (Aufbau, Format und HMAC brauchen keinen Zustand außer dem Schlüssel); sonst könnte jemand ohne Schlüssel den Lock halten (Lock-DoS). **Nur Prüfen von `seq`, Speichern der Reservierung und Setzen von `last_seq` liegen im Lock** (ein Sperrmechanismus je Gerät); parallele gültig signierte Anfragen desselben Geräts laufen dort nacheinander, sonst könnten zwei gleichzeitige Meldungen dieselbe Sequenz verbrauchen oder `last_seq` zurücksetzen. Da die Signatur die Sequenz bindet, ändert die Reihenfolge nichts am Ergebnis. Akzeptiert nur `seq > last_seq`, sonst `409 seq_too_low` (Details unten). Vor dem Lesen der Nutzlast wird `last_seq := seq` gesetzt: Die Sequenz ist mit gültiger Signatur **verbraucht**, auch wenn die Nutzlast danach `422` ergibt.
 - **Dauerhaftigkeit auf HA-Seite durch Reservierung:** HA speichert einen Wert `reserved ≥` jedes je akzeptierten `seq`. Muss `seq` über `reserved` hinaus, speichert HA **zuerst** `reserved := seq + 99` (mit Warten auf das Speichern) und akzeptiert danach. Beim Start gilt `last_seq := reserved`. So kann ein HA-Absturz nie dazu führen, dass eine alte Meldung wieder akzeptiert wird; die App holt den Rückstand über den Abgleich (unten) auf.
 - **App**: speichert einen Reservierungswert `reserved_app` (höchste je verwendete oder reservierte Nummer) im lokalen Speicher. Vor `seq = n` mit `n > reserved_app` setzt sie `reserved_app := n + 99` und speichert **zuerst**. Nach einem Neustart beginnt sie bei `reserved_app + 1`. Es entstehen höchstens 99 Lücken pro Neustart, ein Schreibvorgang etwa alle 100 Meldungen.
 - **Abgleich bei `409`:** Die Antwort enthält `last_seq` und einen `proof` (4.5). Prüft die App den Beweis erfolgreich und ist `last_seq` ≤ `2^53 − 1000`, setzt sie `reserved_app := max(reserved_app, last_seq + 100)`, `seq := last_seq + 1` und sendet die Meldung **einmal** neu (mit neuer Sequenz). Eine Meldung nach `409` ist **idempotent**: `state` ersetzt den ganzen Zustand (nochmaliges Senden schadet nicht), ein `event` wird nur wiederholt, wenn HA mit `409` ablehnte (dann wurde er nicht verarbeitet), nie nach Netzfehler oder Zeitüberschreitung. Die App hat je Gerät **höchstens eine Anfrage gleichzeitig** offen und sendet `state`, `heartbeat` und `event` in Reihenfolge der Sequenznummern; beim Zusammentreffen von `state`, `heartbeat` und Abgleich gilt: erst Abgleich, dann den aktuellen `state` senden, dann ggf. den wartenden `heartbeat` (veraltete wartende `state` werden verworfen). Das deckt zurückgesetzte App-Speicher (Sicherung eingespielt) und HA-Neustarts ab. Ist der Beweis ungültig, übernimmt die App nichts („nicht bestätigt“).
@@ -280,7 +280,9 @@ sig = base64url( HMAC-SHA256( K_a2h, signing_input ) )
 
 ### 4.4 Antworten des Webhooks
 
-Alle Antworten sind JSON (`Content-Type: application/json`) mit `Access-Control-Allow-Origin: *`.
+Alle Antworten sind JSON (`Content-Type: application/json`) mit `Access-Control-Allow-Origin: *` und `Cache-Control: no-store`.
+
+**Content-Type:** Der Webhook akzeptiert nur `text/plain` (Parameter wie `charset` und Groß-/Kleinschreibung egal); jeder andere Typ → `400 bad_request`, die Sequenz bleibt unverbraucht (Vektoren `wrong_content_type`, `content_type_charset_ok`). Die Pairing-Endpunkte akzeptieren `text/plain` und `application/json`, sonst `400 bad_request`.
 
 | HTTP | `error` / `code` | Bedeutung | Reaktion der App |
 |---|---|---|---|
@@ -294,7 +296,19 @@ Alle Antworten sind JSON (`Content-Type: application/json`) mit `Access-Control-
 | 429 | `rate_limited` | zu viele Meldungen (`Retry-After`) | warten, dann weiter (keine Wiederholungsschleife) |
 | 5xx | – | Fehler in HA | mit Pause erneut, nicht puffern (Abschnitt 5.5) |
 
-Erfolgsantwort: `{"ok":true,"code":"ok","seq":<seq>,"resync":<bool>,"proof":"…"}`. Fehlerantwort: `{"ok":false,"error":"<code>", …}`.
+**Antwortformate (verbindlich, so setzt es die Integration um):**
+
+| Fall | Webhook | Pairing |
+|---|---|---|
+| Erfolg | `{"ok":true,"code":"ok","seq":<seq>,"resync":<bool>,"proof":"…"[,"ignored":true]}` | je Schritt wie in 3.4 (ohne `ok`) |
+| Fehler | `{"ok":false,"error":"<code>"[,…]}` | `{"error":"<code>"[,…]}` (ohne `ok`) |
+| `unsupported_version` | zusätzlich `"supported":[1]` | zusätzlich `"supported":[1]` |
+| `409 seq_too_low` | zusätzlich `"last_seq":<n>,"proof":"…"` | – |
+| `429 rate_limited` | zusätzlich `"retry_after":<Sekunden>` und Header `Retry-After` | Header `Retry-After` und `retry_after` |
+| `403 pairing_failed` | – | zusätzlich `"attempts_left":<n>` |
+| `500 internal` | `{"ok":false,"error":"internal"}` | `{"error":"internal"}` |
+
+Das Feld heißt immer `error` (String-Code aus 7.1), nie `code` im Fehlerfall; `code` steht nur in Erfolgsantworten.
 
 **Fehlerantworten (`400`, `401`, `413`, `422`, `429`, `5xx`) sind nicht authentisiert** (ein Mitspieler im Netz kann sie fälschen). Die App löscht deshalb **niemals** automatisch Schlüssel oder Kopplung aufgrund einer Fehlerantwort, sondern zeigt nur einen Zustand an und lässt den Nutzer entscheiden. `Retry-After` wird auf höchstens **300 s** gedeckelt. Auch die Zählung „3 in Folge → Kopplung erneuern“ löst nur eine Anzeige aus.
 
@@ -313,8 +327,8 @@ proof = base64url( HMAC-SHA256( K_h2a,
 
 ### 4.6 Rate-Limits Webhook
 
-- **Je Gerät** (nur Meldungen mit gültiger Signatur zählen): höchstens 10 Meldungen in 10 Sekunden; mehr → `429`. Ein Angreifer ohne Schlüssel kann dieses Limit nicht verbrauchen.
-- **Je Quelladresse** für ungültige Signaturen: höchstens 30 pro Minute; danach `429` ohne weitere Prüfung.
+- **Je Gerät:** höchstens 10 **angenommene** Meldungen in 10 Sekunden; das Limit wird **nach** der Sequenzprüfung angewandt, `429` verbraucht **keine** Sequenz, und Wiederholungen eines Angreifers (`409`) verbrauchen es nicht. Ein Angreifer ohne Schlüssel kann es nicht verbrauchen.
+- **Je Quelladresse:** höchstens 30 abgewiesene Meldungen (`401`, `409`) pro Minute; danach `429` ohne weitere Prüfung.
 - Sender SOLLEN `state` zusammenfassen: höchstens 1 `state` pro Sekunde (letzter Stand gewinnt), Heartbeat alle 30 s.
 
 ---
@@ -368,6 +382,13 @@ Wird bei jeder Änderung gesendet (Start, Pause, Titelwechsel, Seek, Ende, App-S
 | `position_ms` | int | nein | 0–172800000; nicht bei `live`; ≤ `duration_ms`, wenn beide da |
 
 HA schätzt die Position bei `playing` selbst weiter (Position + Zeit seit Empfang) und gleicht mit der nächsten Meldung ab. Die App sendet Position nur bei Zustandsänderung, nicht fortlaufend.
+
+### 5.2a Verhalten von HA nach Zuständen
+
+- **Start von HA:** `ha_state_rev` ist unbekannt (`null`); der erste `heartbeat` löst immer `resync:true` aus (Vektor `heartbeat_after_restart`).
+- **Nach `closed`:** Der Player bleibt „aus“, der Verfügbarkeits-Timer ruht, bis wieder ein Zustand eintrifft. `buffering` wird als „Puffern“ gezeigt, ein unbekannter Status als „Leerlauf“.
+- **Nach 90 s Stille:** Zustand und Titel werden verworfen. Der Binär-Sensor „App aktiv“ ist immer verfügbar (aus statt nicht verfügbar).
+- **Abo-Ablauf:** Das Protokoll liefert nur ein Datum; HA setzt den Beginn dieses Tages in der HA-Zeitzone.
 
 ### 5.3 `heartbeat`
 
@@ -562,6 +583,10 @@ HA wartet auf den `ack` bis **11 s nach Empfang der verwendeten Nonce** (6.2); s
 
 Die App sendet (wenn erreichbar) eine signierte Meldung `{"v":1,"type":"unpair"}`, löscht danach **sofort lokal** Schlüssel, `device_id`, `webhook_id`, `reserved_app` und Adresse, und zeigt „nicht gekoppelt“. HA markiert das Gerät als „von der App getrennt“, löscht den Schlüssel, entfernt den Webhook und zeigt in HA eine Reparatur-Meldung („Gerät hat die Kopplung beendet, Eintrag entfernen“). Ist HA nicht erreichbar, bleibt der Eintrag in HA verwaist und verfügbarkeits-`unavailable`; der Nutzer löscht ihn in HA. Eine Meldung ohne Erfolg wird nicht wiederholt.
 
+### 7.2a Erneute Kopplung („Kopplung erneuern“)
+
+Wird ein Gerät erneut gekoppelt, gelten **neue** `device_id`, `webhook_id` und Schlüssel; Sequenzspeicher und Reservierung werden zurückgesetzt, alte Reparatur-Meldungen gelöscht. Die Geräte-Kennung in HA (Entitäten, Verlauf) ist **unabhängig von der `device_id`** des Protokolls (die Integration nutzt die `entry_id`), damit die Entitäten erhalten bleiben. Meldet die App `unpair`, löscht die Integration Schlüssel und Webhook, legt eine nicht behebbare Reparatur-Meldung an und startet den Erneuerungs-Ablauf.
+
 ### 7.3 Trennen von HA aus
 
 Löscht der Nutzer das Gerät in HA, entfernt die Integration Schlüssel und Webhook (und schickt, wenn der Kanal offen ist, `command unpair`). Die App erkennt es an „3 aufeinanderfolgenden unbestätigten Antworten“ (4.4) oder am `unpair`-Befehl und meldet „Kopplung erneuern“; der Nutzer kann dort trennen (lokal löschen) oder neu koppeln. Die alte `device_id` wird nicht wiederverwendet.
@@ -661,6 +686,7 @@ Logs (App, Integration, Test-Ausgaben) DÜRFEN NICHT enthalten: Code `P`, `a`, `
 - Rechenzeit der Kopplung am Tizen-TV (3.7) und Entscheidung 3072 oder 2048 Bit.
 - Lesbarkeit der Webhook-Antworten bei Tizen (`<access origin>`), sonst Beweise nicht prüfbar (2.1).
 - Zeitwerte (90 s, 30 s, Nonce 8/10 s, HA-Timeout 11 s, 60 s) sind Startwerte, am Gerät zu prüfen.
+- Bekannte Rennen (akzeptiert): Verlässt der Nutzer den Einrichtungsdialog nach `M2`, aber vor dem Anlegen des Eintrags, kennt die App eine Kopplung, die HA nicht kennt (Zeitfenster Millisekunden; App zeigt „Kopplung erneuern“). Die erste Meldung kann vor der Webhook-Registrierung eintreffen (HA antwortet leer; die App toleriert 2 Fehlschläge, bevor sie „Kopplung erneuern“ zeigt).
 - Ob und wie HA anhand `Origin` Pairing-Anfragen fremder Webseiten abweisen kann, ohne Tizen auszuschließen (Ursprung der Tizen-App am Gerät bestimmen).
 - Android-Mindest-API für Zusatzbibliotheken ist in `v1` kein Thema; erst bei `v2` (3.9).
 
@@ -674,6 +700,14 @@ Logs (App, Integration, Test-Ausgaben) DÜRFEN NICHT enthalten: Code `P`, `a`, `
 - **Strenge Formatprüfung aller WebSocket-Felder:** alle Pflichtfelder vorhanden und vom richtigen Typ; `device_id`, `id`, `nonce`, `Na`, `Nh`, `next_nonce`, `value` genau 22 Zeichen base64url (16 Byte), alle `proof`/`mac`/`sig` genau 43 Zeichen (32 Byte), kanonisch dekodierbar; `cmd` und `arg` höchstens 16 Zeichen; `type` aus fester Menge; unbekannte `type`-Werte im WebSocket schließen die Verbindung (`4400`) statt ignoriert zu werden (anders als im Webhook).
 - **Gleichzeitiges `state`, `heartbeat` und `409`-Abgleich:** nach 4.3 (eine Anfrage gleichzeitig, Reihenfolge nach Sequenz, Meldungen nach Abgleich idempotent, keine Duplikate).
 - **Geklonter Schlüssel:** Erkennung über wiederholte `409`/Sequenzsprünge, Reparatur-Meldung in HA, Heilung nur durch erneutes Koppeln (4.3).
+
+### 9.7 Festlegungen aus der Umsetzung von Stufe 1 (`iTrendPlayerHomeAssistant/docs/DECISIONS.md`)
+
+Übernommen: Content-Type (4.4), Antwortformate (4.4), `ha_state_rev` nach Start, Verhalten nach `closed`, Verfügbarkeit, Geräte-Kennung und erneute Kopplung (7.2a), Rate-Limit-Zählung (4.6), Platzvergabe bei Pairing (3.4/3.6), Signatur vor Lock (4.3), Nutzlast mit rohem LF.
+
+Ergänzend (Implementierungsentscheidungen, kein Protokollteil): Ein neuer Einrichtungsdialog ersetzt einen offenen Code (der alte zeigt „ersetzt“). Der Fehlversuchszähler (`used`) zählt entnommene Versuche **vor** der Rechnung; der Code wird gesperrt, sobald 3 Beweise bestätigt falsch waren (das deckt sich mit 3.4, da jeder entnommene, nicht bestätigte Versuch zählt). Titelattribute sind vom Recorder ausgenommen, es gibt kein „Zustand wiederherstellen“; Ereignisse tragen nur `device_id`, `entry_id`, `type`, `reason`, `media` (erlaubte Felder). Unbekannte Felder in Pairing-Nachrichten werden ignoriert. Pairing-Views registrieren ihre Routen selbst, damit der eigene `OPTIONS`-Handler nicht mit HA-CORS kollidiert.
+
+**Abweichungen von der früheren Fassung dieser Spezifikation (jetzt hier festgelegt):** (a) Rohes LF in der Nutzlast war „verboten“, ist jetzt für Empfänger zulässig. (b) Das Gerätelimit zählte „gültig signierte“ Meldungen, jetzt nur „angenommene“. (c) Fehlerfeld im Fehlerfall ist `error`, nicht `code`. Nicht umgesetzt in Stufe 1: WebSocket (Stufe 3), `Origin`-Auswertung (offen, 9.5), Markenbilder.
 
 ## Anhang A: Gruppe
 
@@ -698,4 +732,4 @@ d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e2
 
 ## Anhang B: Testvektoren
 
-`vectors.json` enthält, jeweils mit Eingaben und Erwartung: `encodings` (gültiges und ungültiges base64url), `primitives` (RFC-4231- und RFC-5869-Fälle, SHA-256), `srp_group`, `pairing` (feste Testwerte `a`, `b`, Salt, Code; alle Zwischenwerte, Nachrichten, falscher Code), `length_prefix`, `srp_bounds` (Randwerte), `names`, `webhook` (25 Fälle, u. a. doppelter JSON-Schlüssel: gültig, Wiederholung, Lücke, Manipulation, falscher Pfad/Schlüssel/Gerät, Version, Aufbaufehler, Sequenzformen, zu groß, unbekannte Typen), `payloads` (34 Nutzlast-Fälle gültig/ungültig, mit Codepunkt-Grenzen), `websocket` (Handshake, Nonce, 16 Befehlsfälle mit Formatfehlern und `bad_sig` ohne Nonce-Verbrauch, 10 `ack`-Fälle mit strenger Prüfung). Prüfen: `python3 reference.py --check` (nur Standardbibliothek). Neu erzeugen: `python3 reference.py --generate`; geänderte Vektoren erfordern eine Änderung des Protokolls oder einen Fehlerbericht.
+`vectors.json` enthält, jeweils mit Eingaben und Erwartung: `encodings` (gültiges und ungültiges base64url), `primitives` (RFC-4231- und RFC-5869-Fälle, SHA-256), `srp_group`, `pairing` (feste Testwerte `a`, `b`, Salt, Code; alle Zwischenwerte, Nachrichten, falscher Code), `length_prefix`, `srp_bounds` (Randwerte), `names`, `webhook` (28 Fälle, u. a. falscher Content-Type, `ha_state_rev` unbekannt, u. a. doppelter JSON-Schlüssel: gültig, Wiederholung, Lücke, Manipulation, falscher Pfad/Schlüssel/Gerät, Version, Aufbaufehler, Sequenzformen, zu groß, unbekannte Typen), `payloads` (37 Nutzlast-Fälle, auch mit angehängtem LF gültig/ungültig, mit Codepunkt-Grenzen), `websocket` (Handshake, Nonce, 16 Befehlsfälle mit Formatfehlern und `bad_sig` ohne Nonce-Verbrauch, 10 `ack`-Fälle mit strenger Prüfung). Prüfen: `python3 reference.py --check` (nur Standardbibliothek). Neu erzeugen: `python3 reference.py --generate`; geänderte Vektoren erfordern eine Änderung des Protokolls oder einen Fehlerbericht.

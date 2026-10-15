@@ -41,6 +41,7 @@
       "a+b/",
       "ab c",
       "ab\n",
+      "AAAA\n",
       "AAA="
     ],
     "note": "AB hat nichtkanonische Restbits und ist ungueltig; A hat unmoegliche Laenge."
@@ -559,6 +560,48 @@
         "last_seq_after": 48
       },
       {
+        "name": "wrong_content_type",
+        "description": "Content-Type application/json am Webhook: 400, Sequenz nicht verbraucht",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\ndi9dpBh2y_tvTjDnzwPdD_rkWgxw3CX_fyQiBd_iLk8\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 400,
+          "code": "bad_request"
+        },
+        "last_seq_after": 47,
+        "content_type": "application/json"
+      },
+      {
+        "name": "content_type_charset_ok",
+        "description": "text/plain mit Parameter ist erlaubt",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\nAyKmbej11xW56aPBbhGC3rPdeh943w58BOZnJ1VYoTI\n{\"v\":1,\"type\":\"state\",\"rev\":8,\"status\":\"idle\"}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "8UMWeUAZhlMrR5TGs71dwQLSjMZQIu_8zeY33DhDhxU"
+        },
+        "last_seq_after": 48,
+        "content_type": "Text/Plain; charset=utf-8"
+      },
+      {
+        "name": "heartbeat_after_restart",
+        "description": "ha_state_rev unbekannt (null) nach HA-Neustart: erster heartbeat gibt resync",
+        "last_seq_before": 47,
+        "ha_state_rev_before": null,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\nh0ODIuZo15Uv9iHD3q41KacwjQ9JnVRYSz8JczG1Fag\n{\"v\":1,\"type\":\"heartbeat\",\"app_version\":\"0.3.0\",\"platform\":\"tizen\",\"state_rev\":7,\"ws\":false,\"sub\":{\"expires\":\"2027-03-31\",\"connections_active\":1,\"connections_max\":2}}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": true,
+          "proof": "bWZaKn0p4nNTmnTjvdQOx1ZfU1MWR5Hn6cauGqzXkJw"
+        },
+        "last_seq_after": 48
+      },
+      {
         "name": "too_large",
         "description": "Body ueber 4096 Byte",
         "last_seq_before": 47,
@@ -993,6 +1036,47 @@
           "name": "something_new"
         },
         "expect": null
+      },
+      {
+        "name": "event_name_trailing_lf_bad",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "playback_started\n"
+        },
+        "expect": "name"
+      },
+      {
+        "name": "heartbeat_version_trailing_lf_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0\n",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          }
+        },
+        "expect": "app_version"
+      },
+      {
+        "name": "heartbeat_expires_trailing_lf_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31\n"
+          }
+        },
+        "expect": "sub_expires"
       },
       {
         "name": "unknown_type_ignored",

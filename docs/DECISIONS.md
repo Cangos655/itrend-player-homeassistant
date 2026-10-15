@@ -11,7 +11,7 @@ Wo PROTOCOL.md offen ist, wurde konservativ entschieden. Die Spezifikation wurde
 7. **Zähler:** `used` zählt entnommene Versuche (vor der Rechnung), gesperrt wird bei 3 bestätigt falschen Beweisen. Bei 4 offenen Versuchen insgesamt und weniger als 2 der eigenen Adresse bekommt der Anfrager `429` (nichts Fremdes wird verdrängt). Mehr als 2 gleichzeitige `finish`-Rechnungen: `429`, der Versuch bleibt erhalten. Gewinner bei zwei gleichzeitig richtigen Beweisen: nur einer, der andere `404`.
 8. **Signatur vor Sperre:** Die Signatur wird vor dem Geräte-Lock geprüft (nicht darin), damit ohne Schlüssel niemand den Lock halten kann. Semantik gleich.
 9. **Rate-Limits Webhook:** Das Geräte-Limit (10/10 s) zählt nur angenommene Meldungen (Replays eines Angreifers verbrauchen es nicht) und wird nach der Sequenzprüfung angewandt; `429` verbraucht keine Sequenz. `401` und `409` zählen im Quelladressen-Limit (30/min).
-10. **Antwortformat:** Erfolg `{"ok":true,"code":"ok","seq","resync","proof"[,"ignored"]}`; Fehler `{"ok":false,"error":…}`; `409` mit `last_seq`, `proof`.
+10. **Antwortformat:** Erfolg `{"ok":true,"code":"ok","seq","resync","proof"[,"ignored"]}`; Fehler `{"ok":false,"error":…}`; `409` mit `last_seq`, `proof`; `429` mit `retry_after` und Header. Seit der bereinigten Spezifikation (4.4, 9.7) verbindlich, ebenso Punkte 3, 8, 9, 11, 14.
 11. **`ha_state_rev`** ist nach Start unbekannt: Der erste Herzschlag erzeugt `resync:true`.
 12. **Trennen durch die App (`unpair`):** Schlüssel im Eintrag gelöscht, Webhook entfernt, Reparaturmeldung (nicht behebbar) und Reauth-Fluss gestartet.
 13. **Geklonter Schlüssel:** 5 gültig signierte Meldungen mit `seq ≤ last_seq` in 10 min oder Sprung > 1000: Reparaturmeldung. Sie bleibt bis zur Neukopplung/Löschen.

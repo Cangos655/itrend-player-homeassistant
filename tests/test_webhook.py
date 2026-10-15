@@ -54,8 +54,9 @@ async def test_all_vector_cases(env, case):
     device.last_seq = case["last_seq_before"]
     device.reserved = case["last_seq_before"]
     device.state.rev = case["ha_state_rev_before"]
+    headers = {"Content-Type": case["content_type"]} if "content_type" in case else TEXT
     resp = await client.post("/api/webhook/" + app.webhook_id,
-                             data=case["body"].encode("utf-8"), headers=TEXT)
+                             data=case["body"].encode("utf-8"), headers=headers)
     exp = case["expect"]
     assert resp.status == exp["http"], await resp.text()
     body = await resp.json()
@@ -400,6 +401,7 @@ async def test_bad_signature_rate_limit_per_source(env):
     # ohne weitere Pruefung: auch ein gueltiger Body bekommt 429
     resp = await app.post(client, good)
     assert resp.status == 429 and int(resp.headers["Retry-After"]) >= 1
+    assert (await resp.json())["retry_after"] == int(resp.headers["Retry-After"])
     clock.advance(61)
     assert (await app.post(client, good)).status == 200
 

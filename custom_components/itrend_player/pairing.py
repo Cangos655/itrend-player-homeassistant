@@ -104,7 +104,8 @@ def _err(status: int, code: str, **extra: Any) -> Reply:
 
 
 def _rate_limited(retry_after: int) -> Reply:
-    return 429, {"error": "rate_limited"}, {"Retry-After": str(max(1, retry_after))}
+    retry_after = max(1, retry_after)
+    return 429, {"error": "rate_limited", "retry_after": retry_after}, {"Retry-After": str(retry_after)}
 
 
 class PairingManager:
