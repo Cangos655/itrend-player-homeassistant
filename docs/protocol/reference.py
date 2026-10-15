@@ -16,10 +16,12 @@ import base64
 import datetime
 import hashlib
 import hmac
+import ipaddress
 import json
 import os
 import re
 import sys
+import urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 VECTORS = os.path.join(HERE, "vectors.json")
@@ -215,7 +217,34 @@ def resp_proof(key_h2a, device_id, seq, req_sig, code, last_seq, resync):
 # ------------------------------------------------------- Nutzlast-Pruefung
 KINDS = {"live", "movie", "episode", "trailer", "other"}
 STATUSES = {"idle", "buffering", "playing", "paused", "closed"}
-EVENTS = {"playback_started", "playback_stopped", "channel_changed", "trailer_opened"}
+EVENTS = {"playback_started", "playback_stopped", "channel_changed", "trailer_opened",
+          "playlist_refreshed", "playlist_failed"}
+PLAYLIST_ERRORS = {"none", "no_network", "unauthorized", "server_error", "connection_lost",
+                   "storage", "other"}
+PICTURE_MAX = 512
+# Normalisierte Namen (klein, ohne '-', '_' und Leerzeichen); Vergleich nach genau einmaligem URL-Dekodieren.
+SECRET_QUERY_NAMES = {
+    "username", "user", "usr", "login", "uid", "password", "pass", "passwd", "pw", "pwd",
+    "token", "accesstoken", "key", "apikey", "auth", "authorization", "secret", "sig",
+    "signature", "xamzsignature", "session", "sid", "ticket", "credential", "xamzcredential",
+    "xamzsecuritytoken", "sessionid", "bearer"}
+BLOCKED_SUFFIXES = (".test", ".invalid", ".example", ".local", ".localhost", ".internal", ".lan",
+                    ".home.arpa", ".localdomain", ".corp", ".home", ".intranet", ".private")
+BLOCKED_PATH_SEGMENTS = {"live", "movie", "series", "vod", "stream", "hls"}
+BLOCKED_EXTENSIONS = (".ts", ".m3u8", ".m3u", ".mp4", ".mkv", ".avi", ".mp3")
+# Normative Sperrlisten (PROTOCOL.md 5.2a). Nichts davon haengt von is_global o. ae. ab.
+BLOCKED_V4 = [ipaddress.ip_network(n) for n in (
+    "0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12",
+    "192.0.0.0/24", "192.0.2.0/24", "192.88.99.0/24", "192.168.0.0/16", "198.18.0.0/15",
+    "198.51.100.0/24", "203.0.113.0/24", "224.0.0.0/4", "240.0.0.0/4", "255.255.255.255/32")]
+BLOCKED_V6 = [ipaddress.ip_network(n) for n in (
+    "::/128", "::1/128", "::/96", "::ffff:0:0/96", "64:ff9b::/96", "64:ff9b:1::/48", "100::/64",
+    "2001::/32", "2001:10::/28", "2001:db8::/32", "2002::/16", "fc00::/7", "fe80::/10", "fec0::/10",
+    "ff00::/8", "::ffff:0:0:0/96")]
+_LABEL = re.compile(r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?")
+_V4 = re.compile(r"(0|[1-9][0-9]{0,2})(\.(0|[1-9][0-9]{0,2})){3}")
+_PORT = re.compile(r"[1-9][0-9]{0,4}")
+_PCT = re.compile(r"%[0-9A-Fa-f]{2}")
 STOP_REASONS = {"ended", "user", "error"}
 VERSION_RE = re.compile(r"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}(-[A-Za-z0-9.]{1,16})?$")
 MAX_MS = 172800000
@@ -233,6 +262,162 @@ def _is_text(x, lo, hi):
     except UnicodeEncodeError:
         return False
     return all(ord(c) >= 0x20 and ord(c) != 0x7F for c in x)
+
+
+def _pct_decode_once(s):
+    """Genau einmal dekodieren; ungueltige %-Folge, ungueltiges UTF-8, NUL/Steuerzeichen -> None."""
+    if re.search(r"%(?![0-9A-Fa-f]{2})", s):
+        return None
+    try:
+        out = urllib.parse.unquote(s, encoding="utf-8", errors="strict")
+    except UnicodeDecodeError:
+        return None
+    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in out):
+        return None
+    return out
+
+
+def _norm_name(n):
+    return n.lower().replace("-", "").replace("_", "").replace(" ", "")
+
+
+def picture_ok(u):
+    """Strenge Pruefung der Bild-URL (App vor dem Senden, Integration beim Empfang).
+    Ohne DNS-Aufloesung; Rebinding/Weiterleitungen sind Restrisiken (PROTOCOL.md 8.3a)."""
+    if not isinstance(u, str) or not 1 <= len(u) <= PICTURE_MAX:
+        return False
+    if any(not 0x21 <= ord(c) <= 0x7E or c == "\\" for c in u) or "#" in u:
+        return False
+    m = re.fullmatch(r"(https?)://([^/?]*)([^?]*)(?:\?(.*))?", u)
+    if not m:
+        return False  # Schema nur klein geschrieben http/https
+    _scheme, auth, path, query = m.groups()
+    if not auth or "@" in auth:
+        return False
+    # --- Host und Port
+    if auth.startswith("["):
+        mm = re.fullmatch(r"\[([0-9A-Fa-f:.]+)\](?::(.*))?", auth)
+        if not mm:
+            return False
+        host_s, port_s = mm.group(1), mm.group(2)
+        try:
+            ip = ipaddress.IPv6Address(host_s)
+        except ValueError:
+            return False
+        if any(ip in n for n in BLOCKED_V6):
+            return False
+        host = None
+    else:
+        if "[" in auth or "]" in auth:
+            return False
+        host_s, sep, port_s = auth.partition(":")
+        if not sep:
+            port_s = None
+        host = host_s.lower()
+        if not host or not re.fullmatch(r"[a-z0-9.-]+", host):
+            return False
+        if _V4.fullmatch(host):
+            octets = [int(x) for x in host.split(".")]
+            if any(o > 255 for o in octets):
+                return False
+            ip4 = ipaddress.IPv4Address(host)
+            if any(ip4 in n for n in BLOCKED_V4):
+                return False
+        else:
+            last = host.rsplit(".", 1)[-1]
+            if last.isdigit() or last.startswith("0x"):
+                return False  # Dezimal-/Oktal-/Hex-/Kurzschreibweisen
+            if host == "localhost" or host.endswith(BLOCKED_SUFFIXES) or "." not in host:
+                return False
+            if len(host) > 253 or not all(_LABEL.fullmatch(lbl) for lbl in host.split(".")):
+                return False
+    if port_s is not None and (not _PORT.fullmatch(port_s) or int(port_s) > 65535):
+        return False
+    # --- Pfad: einmal als Ganzes dekodieren (%2F wird zu '/'), dann Segmente, ohne Beachtung der Gross-/Kleinschreibung
+    dpath = _pct_decode_once(path)
+    if dpath is None:
+        return False
+    for seg in dpath.lower().split("/"):
+        if seg in BLOCKED_PATH_SEGMENTS or seg.endswith(BLOCKED_EXTENSIONS):
+            return False
+    # --- Query: '&' und ';' trennen, '+' = Leerzeichen, einmal dekodieren
+    if query:
+        for pair in re.split(r"[&;]", query):
+            if not pair:
+                continue
+            name, _eq, value = pair.partition("=")
+            dn = _pct_decode_once(name.replace("+", " "))
+            dv = _pct_decode_once(value.replace("+", " "))
+            if dn is None or dv is None:
+                return False
+            if _norm_name(dn) in SECRET_QUERY_NAMES:
+                return False
+    return True
+
+
+def _forms(text):
+    """Roh, einmal dekodiert und einmal dekodiert mit '+' = Leerzeichen; klein geschrieben."""
+    out = {text.lower()}
+    for t in (text, text.replace("+", " ")):
+        d = _pct_decode_once(t)
+        if d is not None:
+            out.add(d.lower())
+    return out
+
+
+def picture_has_credentials(u, username, password):
+    """App-seitige Pflicht: picture verwerfen, wenn Pfad oder Query (nicht Schema/Host)
+    Benutzername oder Passwort des Nutzers enthalten; ohne Beachtung der Gross-/Kleinschreibung.
+    Unter 4 Zeichen nur als vollstaendiges Pfadsegment oder vollstaendiger Query-Wert, ab
+    4 Zeichen als Teilzeichenkette in Pfad oder Query (roh oder einmal dekodiert).
+    Leer/None zaehlt nicht. Doppelt kodiert oder ueber Segmente verteilt: Restrisiko."""
+    m = re.fullmatch(r"https?://[^/?#]*([^?#]*)(?:\?([^#]*))?.*", u)
+    if not m:
+        return False
+    path, query = m.group(1) or "", m.group(2) or ""
+    path_forms = _forms(path)
+    query_forms = _forms(query)
+    seg_forms = set()
+    for seg in path.split("/"):
+        seg_forms |= _forms(seg)
+    val_forms = set()
+    for pair in re.split(r"[&;]", query):
+        val_forms |= _forms(pair.partition("=")[2])
+    for val in (username, password):
+        if not val:
+            continue
+        v = val.lower()
+        if len(val) < 4:
+            if v in seg_forms or v in val_forms:
+                return True
+        elif any(v in f for f in path_forms | query_forms):
+            return True
+    return False
+
+
+KNOWN_FIELDS = {
+    "state": {"v", "type", "rev", "status", "media", "picture"},
+    "heartbeat": {"v", "type", "app_version", "platform", "state_rev", "ws", "sub", "playlist"},
+    "event": {"v", "type", "name", "reason", "error", "media"},
+    "unpair": {"v", "type"},
+    "media": {"kind", "title", "channel", "series", "season", "episode", "duration_ms", "position_ms"},
+    "sub": {"expires", "connections_active", "connections_max"},
+    "playlist": {"updated", "live", "movies", "series", "error"},
+}
+
+
+def strip_unknown(o):
+    """Integration (nach erfolgreicher Pruefung): unbekannte Felder in allen Objekten verwerfen, unbekannte
+    Nachrichtentypen und Ereignisnamen ganz verwerfen (nicht speichern, nicht loggen)."""
+    if o.get("type") not in KNOWN_FIELDS or o.get("type") in ("media", "sub", "playlist"):
+        return {}  # unbekannter Typ: Nutzlast vollstaendig verwerfen
+    if o["type"] == "event" and o.get("name") not in EVENTS:
+        return {}  # unbekanntes Ereignis: vollstaendig verwerfen
+    out = {k: o[k] for k in o if k in KNOWN_FIELDS[o["type"]]}
+    for key in ("media", "sub", "playlist"):
+        if isinstance(out.get(key), dict):
+            out[key] = {k: out[key][k] for k in out[key] if k in KNOWN_FIELDS[key]}
+    return out
 
 
 def validate_media(m):
@@ -276,7 +461,14 @@ def validate_payload(o):
         if "media" in o:
             if o["status"] not in ("buffering", "playing", "paused"):
                 return "media_not_allowed_in_status"
-            return validate_media(o["media"])
+            r = validate_media(o["media"])
+            if r:
+                return r
+        if "picture" in o:
+            if "media" not in o:
+                return "picture_without_media"
+            if not picture_ok(o["picture"]):
+                return "picture"
         return None
     if t == "heartbeat":
         av = o.get("app_version")
@@ -294,7 +486,7 @@ def validate_payload(o):
                 return "sub"
             if "expires" in s and s["expires"] is not None:
                 e = s["expires"]
-                if not isinstance(e, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", e):
+                if not isinstance(e, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", e):
                     return "sub_expires"
                 try:
                     datetime.date.fromisoformat(e)
@@ -303,6 +495,23 @@ def validate_payload(o):
             for key in ("connections_active", "connections_max"):
                 if key in s and not _is_int(s[key], 0, 99):
                     return "sub_" + key
+        if "playlist" in o:
+            p = o["playlist"]
+            if not isinstance(p, dict):
+                return "playlist"
+            if "updated" in p and p["updated"] is not None:
+                u = p["updated"]
+                if not isinstance(u, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z", u):
+                    return "playlist_updated"
+                try:
+                    datetime.datetime.strptime(u, "%Y-%m-%dT%H:%M:%SZ")
+                except ValueError:
+                    return "playlist_updated"
+            for key in ("live", "movies", "series"):
+                if key in p and not _is_int(p[key], 0, 999999):
+                    return "playlist_" + key
+            if "error" in p and p["error"] not in PLAYLIST_ERRORS:
+                return "playlist_error"
         return None
     if t == "event":
         name = o.get("name")
@@ -312,6 +521,10 @@ def validate_payload(o):
             return None  # unbekannte Ereignisse: annehmen und ignorieren
         if "reason" in o and (name != "playback_stopped" or o["reason"] not in STOP_REASONS):
             return "reason"
+        if name == "playlist_failed" and (o.get("error") not in PLAYLIST_ERRORS or o["error"] == "none"):
+            return "error"
+        if name != "playlist_failed" and "error" in o:
+            return "error"
         if "media" in o:
             return validate_media(o["media"])
         return None
@@ -726,6 +939,8 @@ def build_vectors():
     st = lambda **kw: dict({"v": 1, "type": "state", "rev": 1, "status": "playing"}, **kw)  # noqa: E731
     emoji120 = "\U0001F600" * 120
     emoji121 = "\U0001F600" * 121
+    pl = {"updated": "2026-10-15T08:30:00Z", "live": 1200, "movies": 5400, "series": 800, "error": "none"}
+    pic = "https://img.example.com/covers/123.jpg"
     vcs = [
         vc("state_ok", p_state), vc("state_idle_ok", p_state_idle),
         vc("state_live_ok", st(media={"kind": "live", "channel": "Beispielsender 1", "title": "Nachrichten"})),
@@ -764,7 +979,214 @@ def build_vectors():
         vc("heartbeat_expires_trailing_lf_bad", dict(p_hb, sub={"expires": "2027-03-31\n"})),
         vc("unknown_type_ignored", {"v": 1, "type": "future"}),
         vc("not_an_object", [1, 2]),
+        vc("picture_ok", dict(p_state, picture=pic)),
+        vc("picture_without_media_bad", dict(p_state_idle, picture=pic)),
+        vc("picture_javascript_bad", dict(p_state, picture="javascript:alert(1)")),
+        vc("picture_userinfo_bad", dict(p_state, picture="https://u:p@img.example.com/a.jpg")),
+        vc("picture_private_bad", dict(p_state, picture="http://192.168.1.5/a.jpg")),
+        vc("picture_not_string_bad", dict(p_state, picture=5)),
+        vc("playlist_updated_arabic_digits_bad", dict(p_hb, playlist={"updated": "\u0662\u0660\u0662\u0666-10-15T08:30:00Z"})),
+        vc("heartbeat_expires_fullwidth_digits_bad", dict(p_hb, sub={"expires": "\uff12\uff10\uff12\uff17-03-31"})),
+        vc("playlist_unknown_field_ok", dict(p_hb, playlist={"live": 1, "address": "x"})),
+        vc("playlist_ok", dict(p_hb, playlist=pl)),
+        vc("playlist_empty_ok", dict(p_hb, playlist={})),
+        vc("playlist_updated_null_ok", dict(p_hb, playlist={"updated": None})),
+        vc("playlist_max_ok", dict(p_hb, playlist={"live": 999999, "movies": 0, "series": 999999})),
+        vc("playlist_live_too_big_bad", dict(p_hb, playlist={"live": 1000000})),
+        vc("playlist_negative_bad", dict(p_hb, playlist={"movies": -1})),
+        vc("playlist_float_bad", dict(p_hb, playlist={"series": 1.0})),
+        vc("playlist_updated_no_z_bad", dict(p_hb, playlist={"updated": "2026-10-15T08:30:00"})),
+        vc("playlist_updated_offset_bad", dict(p_hb, playlist={"updated": "2026-10-15T08:30:00+02:00"})),
+        vc("playlist_updated_bad_date_bad", dict(p_hb, playlist={"updated": "2026-02-30T08:30:00Z"})),
+        vc("playlist_updated_lf_bad", dict(p_hb, playlist={"updated": "2026-10-15T08:30:00Z\n"})),
+        vc("playlist_error_unknown_bad", dict(p_hb, playlist={"error": "http_404"})),
+        vc("playlist_not_object_bad", dict(p_hb, playlist=[1])),
+        vc("event_playlist_refreshed_ok", {"v": 1, "type": "event", "name": "playlist_refreshed"}),
+        vc("event_playlist_failed_ok", {"v": 1, "type": "event", "name": "playlist_failed", "error": "unauthorized"}),
+        vc("event_playlist_failed_no_error_bad", {"v": 1, "type": "event", "name": "playlist_failed"}),
+        vc("event_playlist_failed_none_bad", {"v": 1, "type": "event", "name": "playlist_failed", "error": "none"}),
+        vc("event_playlist_failed_unknown_error_bad", {"v": 1, "type": "event", "name": "playlist_failed", "error": "x"}),
+        vc("event_error_on_other_bad", {"v": 1, "type": "event", "name": "playlist_refreshed", "error": "other"}),
     ]
+    E = "https://example.com/x.png"
+    # Hand eingetragene Erwartungen (nicht aus picture_ok erzeugt): (url, gueltig, Begruendung)
+    pic_cases = [
+        ("https://img.example.com/covers/123.jpg", True, "normale URL"),
+        ("http://cdn.example.org:8080/logo.png?size=large", True, "http mit Port und harmloser Query"),
+        ("https://example.com/a%20b.jpg", True, "Prozent-Kodierung im Pfad"),
+        ("https://example.com/p?width=200&height=300", True, "mehrere Parameter"),
+        ("https://example.com/x?a=1;b=2", True, "Semikolon als Trenner, harmlos"),
+        ("https://example.com/x?name=cover", True, "name allein ist kein Zugangsname"),
+        ("https://example.com/livestock/a.jpg", True, "Segment nur aehnlich wie live"),
+        ("https://example.com/images/series-cover.jpg", True, "Segment ist nicht exakt series"),
+        ("https://example.com/x?%2570assword=1", True, "doppelt kodiert: nur einmal dekodiert, Name bleibt %70assword"),
+        ("https://example.com:443/x.png", True, "Port 443"),
+        ("http://example.com:65535/x", True, "hoechster Port"),
+        ("https://xn--bcher-kva.example.org/x.png", True, "Punycode-Host"),
+        ("http://8.8.8.8/x.png", True, "oeffentliche IPv4"),
+        ("http://93.184.216.34/x.png", True, "oeffentliche IPv4"),
+        ("http://198.51.101.1/x", True, "knapp ausserhalb 198.51.100.0/24"),
+        ("http://203.0.114.1/x", True, "knapp ausserhalb 203.0.113.0/24"),
+        ("http://172.32.0.1/x", True, "knapp ausserhalb 172.16.0.0/12"),
+        ("http://100.128.0.1/x", True, "knapp ausserhalb 100.64.0.0/10"),
+        ("http://169.255.0.1/x", True, "knapp ausserhalb 169.254.0.0/16"),
+        ("http://11.0.0.1/x", True, "knapp ausserhalb 10.0.0.0/8"),
+        ("http://[2001:4860:4860::8888]/x.png", True, "oeffentliche IPv6"),
+        ("http://[2600::1]/x.png", True, "oeffentliche IPv6"),
+        ("http://[2001:1::1]/x.png", True, "knapp ausserhalb 2001::/32"),
+        ("http://127.0.0.1.nip.io/x.png", True, "Restrisiko: DNS-Name mit Loopback-Aufloesung nicht ausschliessbar"),
+        ("http://localtest.me/x.png", True, "Restrisiko: DNS-Name mit Loopback-Aufloesung nicht ausschliessbar"),
+        # Schema
+        ("javascript:alert(1)", False, "Schema javascript"), ("file:///etc/passwd", False, "Schema file"),
+        ("data:image/png;base64,AAAA", False, "Schema data"), ("ftp://example.com/x.png", False, "Schema ftp"),
+        ("//example.com/a.png", False, "schemalos"), ("HTTPS://example.com/x.png", False, "Schema gross"),
+        # Userinfo, Fragment, Laenge, Zeichen
+        ("https://user:pass@example.com/x.png", False, "Userinfo"), ("https://user@example.com/x.png", False, "Userinfo ohne Passwort"),
+        (E + "#a", False, "Fragment"), (E + "#", False, "leeres Fragment"),
+        ("https://example.com/" + "a" * 493, False, "513 Zeichen"), ("", False, "leer"),
+        ("https://exa mple.com/x.png", False, "Leerzeichen"), ("https://example.com/\n", False, "LF"),
+        (E + "\n", False, "angehaengtes LF"), ("https://bücher.example.org/x.png", False, "Nicht-ASCII"),
+        ("https:///x.png", False, "Host leer"), ("https://example.com\\@evil.com/", False, "Backslash"),
+        ("http://example.com./x", False, "Punkt am Ende"), ("http://-bad.example.com/x", False, "Label mit Bindestrich"),
+        # Host-Klammern und Port
+        ("http://[example.com]/", False, "Klammern um Hostnamen"), ("http://[8.8.8.8]/x", False, "Klammern um IPv4"),
+        ("http://[::1/x", False, "Klammer offen"), ("http://::1]/x", False, "Klammer zu ohne auf"),
+        ("http://[::1]x/", False, "Zeichen nach Klammer"), ("http://[fe80::1%25eth0]/x", False, "Zone-ID"),
+        ("http://example.com:/x", False, "Doppelpunkt ohne Port"), ("http://example.com:0/x", False, "Port 0"),
+        ("http://example.com:080/x", False, "fuehrende Null"), ("http://example.com:00080/x", False, "fuehrende Nullen"),
+        ("http://example.com:65536/x", False, "Port zu gross"), ("http://example.com:99999/x", False, "Port zu gross"),
+        ("http://example.com:123456/x", False, "sechs Ziffern"), ("http://example.com:1a/x", False, "Port mit Buchstabe"),
+        ("http://example.com:+80/x", False, "Port mit Vorzeichen"), ("http://[2001:4860::1]:/x", False, "IPv6 Doppelpunkt ohne Port"),
+        ("http://[2001:4860::1]:0/x", False, "IPv6 Port 0"),
+        # IPv4-Sperrliste (je Bereich ein Treffer, dazu Grenzen)
+        ("http://0.1.2.3/x", False, "0.0.0.0/8"), ("http://10.0.0.5/x", False, "10.0.0.0/8"),
+        ("http://10.255.255.255/x", False, "10/8 Ende"), ("http://100.64.0.1/x", False, "100.64.0.0/10"),
+        ("http://100.127.255.255/x", False, "100.64/10 Ende"), ("http://127.0.0.1/x", False, "127.0.0.0/8"),
+        ("http://127.255.255.254/x", False, "127/8 Ende"), ("http://169.254.169.254/latest", False, "169.254.0.0/16"),
+        ("http://172.16.0.1/x", False, "172.16.0.0/12"), ("http://172.31.255.255/x", False, "172.16/12 Ende"),
+        ("http://192.0.0.1/x", False, "192.0.0.0/24"), ("http://192.0.2.1/x", False, "192.0.2.0/24"),
+        ("http://192.88.99.1/x", False, "192.88.99.0/24"), ("http://192.168.1.1/x", False, "192.168.0.0/16"),
+        ("http://198.18.0.1/x", False, "198.18.0.0/15"), ("http://198.19.255.255/x", False, "198.18/15 Ende"),
+        ("http://198.51.100.7/x", False, "198.51.100.0/24"), ("http://203.0.113.9/x", False, "203.0.113.0/24"),
+        ("http://224.0.0.1/x", False, "224.0.0.0/4 Multicast"), ("http://239.255.255.250/x", False, "Multicast Ende"),
+        ("http://240.0.0.1/x", False, "240.0.0.0/4"), ("http://255.255.255.255/x", False, "Broadcast"),
+        ("http://0.0.0.0/x", False, "unspezifiziert"),
+        # IPv4-Schreibweisen
+        ("http://2130706433/x", False, "Dezimal-IP"), ("http://0x7f.1/x", False, "Hex-IP"), ("http://127.1/x", False, "Kurz-IP"),
+        ("http://010.0.0.1/x", False, "fuehrende Null"), ("http://8.8.8.256/x", False, "Oktett > 255"),
+        ("http://1.2.3/x", False, "drei Oktette"), ("http://8.8.8.8.8/x", False, "fuenf Oktette"),
+        # IPv6-Sperrliste
+        ("http://[::]/x", False, "::/128"), ("http://[::1]/x", False, "::1/128"),
+        ("http://[::808:808]/x", False, "::/96 IPv4-kompatibel"), ("http://[::ffff:8.8.8.8]/x", False, "::ffff:0:0/96 gemappt, oeffentlich"),
+        ("http://[::ffff:127.0.0.1]/x", False, "gemappt Loopback"), ("http://[::ffff:7f00:1]/x", False, "gemappt hex"),
+        ("http://[64:ff9b::808:808]/x", False, "NAT64"), ("http://[64:ff9b:1::1]/x", False, "64:ff9b:1::/48"),
+        ("http://[100::1]/x", False, "100::/64"), ("http://[2001::1]/x", False, "Teredo 2001::/32"),
+        ("http://[2001:db8::1]/x", False, "Dokumentation"), ("http://[2002:808:808::1]/x", False, "6to4"),
+        ("http://[fc00::1]/x", False, "fc00::/7"), ("http://[fd12::1]/x", False, "ULA"),
+        ("http://[fe80::1]/x", False, "Link-Local"), ("http://[febf::1]/x", False, "Link-Local Ende"),
+        ("http://[ff02::1]/x", False, "Multicast"),
+        ("http://[fec0::1]/x", False, "fec0::/10 Site-Local"), ("http://[2001:10::1]/x", False, "2001:10::/28"),
+        ("http://[2001:1f::1]/x", False, "2001:10::/28 Ende"), ("http://[2001:20::1]/x", True, "knapp ausserhalb 2001:10::/28"),
+        ("http://[::ffff:0:0:1]/x", False, "::ffff:0:0:0/96 (SIIT)"),
+        ("http://Example.COM/x.png", True, "Host gross geschrieben"), ("http://X.TEST/x", False, "Host gross: .TEST"),
+        ("http://LOCALHOST/x", False, "Host gross: LOCALHOST"),
+        # Hostnamen
+        ("http://localhost/x", False, "localhost"), ("http://a.localhost/x", False, "Unterdomain von localhost"),
+        ("http://nas/x", False, "ein Label"), ("http://x.test/x", False, ".test"), ("http://x.invalid/x", False, ".invalid"),
+        ("http://x.example/x", False, ".example"), ("http://printer.local/x", False, ".local"),
+        ("http://host.internal/x", False, ".internal"), ("http://x.lan/x", False, ".lan"),
+        ("http://x.home.arpa/x", False, ".home.arpa"), ("http://x.localdomain/x", False, ".localdomain"),
+        ("http://x.corp/x", False, ".corp"), ("http://a.b.test/x", False, "tiefe Unterdomaene von .test"),
+        # Query-Namen
+        (E + "?username=a", False, "username"), (E + "?user=a", False, "user"), (E + "?usr=a", False, "usr"),
+        (E + "?login=a", False, "login"), (E + "?uid=1", False, "uid"), (E + "?user_name=a", False, "user_name"),
+        (E + "?User-Name=a", False, "User-Name"), (E + "?password=a", False, "password"), (E + "?pass=a", False, "pass"),
+        (E + "?passwd=a", False, "passwd"), (E + "?pw=a", False, "pw"), (E + "?pwd=a", False, "pwd"),
+        (E + "?token=a", False, "token"), (E + "?accesstoken=a", False, "accesstoken"), (E + "?access_token=a", False, "access_token"),
+        (E + "?access-token=a", False, "access-token"), (E + "?key=a", False, "key"), (E + "?apikey=a", False, "apikey"),
+        (E + "?api_key=a", False, "api_key"), (E + "?auth=a", False, "auth"), (E + "?authorization=a", False, "authorization"),
+        (E + "?secret=a", False, "secret"), (E + "?sig=a", False, "sig"), (E + "?signature=a", False, "signature"),
+        (E + "?X-Amz-Signature=a", False, "X-Amz-Signature"), (E + "?session=a", False, "session"), (E + "?sid=a", False, "sid"),
+        (E + "?xamzcredential=a", False, "xamzcredential"), (E + "?X-Amz-Credential=a", False, "X-Amz-Credential"),
+        (E + "?x-amz-security-token=a", False, "x-amz-security-token"), (E + "?sessionid=a", False, "sessionid"),
+        (E + "?session_id=a", False, "session_id"), (E + "?Bearer=a", False, "Bearer"),
+        (E + "?ticket=a", False, "ticket"), (E + "?credential=a", False, "credential"), (E + "?Token=a", False, "Gross-/Kleinschreibung"),
+        (E + "?a=1&API_KEY=2", False, "zweiter Parameter"), (E + "?a=1;token=2", False, "Semikolon-Trenner"),
+        (E + "?to+ken=1", False, "Plus wird Leerzeichen und entfernt"), (E + "?%74oken=1", False, "Prozent-kodierter Name"),
+        (E + "?%70assword=1", False, "Prozent-kodierter Name"), (E + "?user", False, "Name ohne Wert"),
+        (E + "?a=%zz", False, "ungueltige %-Folge im Wert"), (E + "?a=%", False, "einzelnes Prozentzeichen"),
+        (E + "?a=%0", False, "halbe %-Folge"), (E + "?a=%00", False, "NUL"), (E + "?a=%0A", False, "LF dekodiert"),
+        (E + "?%00=1", False, "NUL im Namen"), (E + "?a=%ff", False, "ungueltiges UTF-8"), (E + "?a%zz=1", False, "ungueltige %-Folge im Namen"),
+        # Pfad
+        ("https://example.com/Movie/a.png", False, "Segment gross: Movie"), ("https://example.com/LIVE/a.png", False, "Segment gross: LIVE"),
+        ("https://example.com/a/x.MP4", False, "Endung gross: .MP4"), ("https://example.com/a/x.M3U8", False, "Endung gross"),
+        ("https://example.com/a%2Flive/x.jpg", False, "%2F vor live"), ("https://example.com/a%2fx.ts", False, "%2f vor Endung .ts"),
+        ("https://example.com/%2Fmovie/x.jpg", False, "%2F vor movie"), ("https://example.com/a%2Fb/x.jpg", True, "%2F, harmlose Segmente"),
+        ("https://example.com/live/a.png", False, "Segment live"), ("https://example.com/movie/u/p/1.jpg", False, "Xtream-Muster movie"),
+        ("https://example.com/series/1.jpg", False, "Segment series"), ("https://example.com/vod/1.jpg", False, "Segment vod"),
+        ("https://example.com/stream/1.jpg", False, "Segment stream"), ("https://example.com/hls/1.jpg", False, "Segment hls"),
+        ("https://example.com/%6Cive/1.jpg", False, "kodiertes live"), ("https://example.com/a/x.ts", False, "Endung .ts"),
+        ("https://example.com/a/x.m3u8", False, "Endung .m3u8"), ("https://example.com/a/x.m3u", False, "Endung .m3u"),
+        ("https://example.com/a/x.mp4", False, "Endung .mp4"), ("https://example.com/a/x.mkv", False, "Endung .mkv"),
+        ("https://example.com/a/x.avi", False, "Endung .avi"), ("https://example.com/a/x.mp3", False, "Endung .mp3"),
+        ("https://example.com/a%zz", False, "ungueltige %-Folge im Pfad"), ("https://example.com/a%00b", False, "NUL im Pfad"),
+    ]
+    v["picture_urls"] = {
+        "note": "Erwartungen von Hand eingetragen, nicht aus picture_ok erzeugt. picture_ok: nur oeffentliche http(s)-Adressen, siehe PROTOCOL.md 5.2a. Die Integration prueft ohne Zugangsdaten; die App zusaetzlich app_credential_cases.",
+        "cases": [{"url": u, "valid": ok, "why": why} for u, ok, why in pic_cases]}
+    def cc(url, user, pw, drop, why):
+        return {"url": url, "username": user, "password": pw, "drop": drop, "why": why}
+
+    I = "https://img.example.com"
+    v["app_credential_cases"] = {
+        "note": "App-seitig (Erwartungen von Hand): nur Pfad und Query, nicht Schema/Host; gross/klein egal; unter 4 Zeichen nur als ganzes Pfadsegment oder ganzer Query-Wert, ab 4 als Teilzeichenkette (roh oder einmal dekodiert); leer/null zaehlt nicht.",
+        "cases": [
+            cc(I + "/covers/a.jpg", "alice", "hunter2", False, "harmlos"),
+            cc(I + "/alice/a.jpg", "alice", "hunter2", True, "Benutzername als Segment"),
+            cc(I + "/covers/alice.jpg", "alice", "hunter2", True, "Benutzername als Teilstring (>= 4)"),
+            cc(I + "/covers/a.jpg?x=hunter2", "alice", "hunter2", True, "Passwort als Query-Wert"),
+            cc(I + "/covers/a.jpg?x=pre-hunter2-post", "alice", "hunter2", True, "Passwort als Teilstring in Query"),
+            cc(I + "/covers/a%6Cice.jpg", "alice", "hunter2", True, "einfach kodiert"),
+            cc(I + "/ALICE/a.jpg", "alice", "hunter2", True, "Grossbuchstaben in URL"),
+            cc(I + "/alice/a.jpg", "ALICE", "x", True, "Grossbuchstaben im Namen"),
+            cc(I + "/M%C3%BCller/a.jpg", "M\u00fcller", "x", True, "Umlaut, einfach kodiert"),
+            cc(I + "/m%C3%9CLLER/a.jpg", "M\u00fcller", "x", True, "Umlaut, Gross/Klein gemischt"),
+            cc(I + "/p%40ss/a.jpg", "u", "p@ss", True, "Sonderzeichen @, 4 Zeichen"),
+            cc(I + "/x/a%20b/y.jpg", "a b", "x", True, "kurz mit Leerzeichen als ganzes Segment"),
+            cc(I + "/a%20b.jpg", "a b", "x", False, "kurz mit Leerzeichen nur Teilstring"),
+            cc(I + "/x.jpg?k=a+b", "a+b", "x", True, "kurz mit Plus als ganzer Query-Wert, roh"),
+            cc(I + "/x.jpg?k=a%2Bb", "a+b", "x", True, "kurz mit Plus, kodiert"),
+            cc(I + "/a/x.jpg", "a", "x", True, "kurz als ganzes Segment"),
+            cc(I + "/data/x.jpg", "a", "x", False, "kurz nur als Teilstring: kein Treffer"),
+            cc(I + "/x.jpg?k=a", "a", "x", True, "kurz als ganzer Query-Wert"),
+            cc(I + "/x.jpg?k=abc", "a", "x", False, "kurz nur Teilstring in Query"),
+            cc(I + "/x.jpg", "x", "com", False, "com steht nur im Host"),
+            cc("https://img.example.com/x.jpg", "x", "http", False, "http steht nur im Schema"),
+            cc(I + "/x.jpg?u=http", "x", "http", True, "http als Query-Wert"),
+            cc("https://alice.example.com/x.jpg", "alice", "x", False, "Name nur im Host"),
+            cc(I + "/x.jpg", "", None, False, "leer und null"),
+            cc(I + "/x.jpg?k=", "", "", False, "leere Werte zaehlen nicht"),
+            cc(I + "/%2568unter2/x.jpg", "x", "hunter2", False, "Restrisiko: doppelt kodiert wird nicht erkannt"),
+            cc(I + "/hun/ter2/x.jpg", "x", "hunter2", False, "Restrisiko: ueber Segmente verteilt")]}
+    strip_cases = [
+        {"name": "state", "input": {"v": 1, "type": "state", "rev": 2, "status": "playing", "foo": 1,
+                                    "picture": "https://img.example.com/c.jpg",
+                                    "media": {"kind": "movie", "title": "T", "x": 5}},
+         "expect": {"v": 1, "type": "state", "rev": 2, "status": "playing",
+                    "picture": "https://img.example.com/c.jpg", "media": {"kind": "movie", "title": "T"}}},
+        {"name": "event", "input": {"v": 1, "type": "event", "name": "playlist_failed", "error": "other", "z": 1},
+         "expect": {"v": 1, "type": "event", "name": "playlist_failed", "error": "other"}},
+        {"name": "unknown_type", "input": {"v": 1, "type": "future", "a": 1}, "expect": {}},
+        {"name": "unknown_event_name", "input": {"v": 1, "type": "event", "name": "something_new", "a": 1}, "expect": {}},
+        {"name": "unpair", "input": {"v": 1, "type": "unpair", "a": 1}, "expect": {"v": 1, "type": "unpair"}}]
+    v["strip_unknown"] = {
+        "note": "Integration verwirft unbekannte Felder in allen Objekten.",
+        "cases": strip_cases,
+        "input": {"v": 1, "type": "heartbeat", "app_version": "0.3.0", "platform": "tizen", "state_rev": 1,
+                  "extra": 1, "sub": {"expires": None, "x": 1},
+                  "playlist": {"live": 5, "address": "https://secret.example/p", "error": "none"}},
+        "expect": {"v": 1, "type": "heartbeat", "app_version": "0.3.0", "platform": "tizen", "state_rev": 1,
+                   "sub": {"expires": None}, "playlist": {"live": 5, "error": "none"}}}
     v["payloads"] = {"note": "expect null = gueltig; sonst Grundcode (bei HA: bad_payload bzw. unsupported_version).",
                      "cases": vcs}
 
@@ -921,6 +1343,15 @@ def check():
                                         "device_id": w["device_id"], "sid": w["sid"],
                                         "sent_id": c["sent_id"]})
         expect(r == c["expect"], "WS-ack " + c["name"])
+    for c in have["app_credential_cases"]["cases"]:
+        expect(picture_has_credentials(c["url"], c["username"], c["password"]) == c["drop"], "App-Zugangsdaten " + c["url"][:40])
+    expect(strip_unknown(have["strip_unknown"]["input"]) == have["strip_unknown"]["expect"], "strip_unknown")
+    for c in have["strip_unknown"]["cases"]:
+        expect(strip_unknown(c["input"]) == c["expect"], "strip_unknown " + c["name"])
+    for c in have["picture_urls"]["cases"]:
+        expect(picture_ok(c["url"]) == c["valid"], "Bild-URL " + c["why"] + ": " + c["url"][:40])
+    expect(any(c["valid"] for c in have["picture_urls"]["cases"]) and
+           any(not c["valid"] for c in have["picture_urls"]["cases"]), "Bild-URL-Fälle gemischt")
     for c in have["srp_bounds"]["cases"]:
         expect(valid_public(int(c["value_hex"], 16)) == c["valid"], "SRP-Grenze " + c["name"])
     for c in have["names"]["cases"]:

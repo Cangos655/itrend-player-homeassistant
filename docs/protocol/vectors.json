@@ -615,6 +615,1335 @@
       }
     ]
   },
+  "picture_urls": {
+    "note": "Erwartungen von Hand eingetragen, nicht aus picture_ok erzeugt. picture_ok: nur oeffentliche http(s)-Adressen, siehe PROTOCOL.md 5.2a. Die Integration prueft ohne Zugangsdaten; die App zusaetzlich app_credential_cases.",
+    "cases": [
+      {
+        "url": "https://img.example.com/covers/123.jpg",
+        "valid": true,
+        "why": "normale URL"
+      },
+      {
+        "url": "http://cdn.example.org:8080/logo.png?size=large",
+        "valid": true,
+        "why": "http mit Port und harmloser Query"
+      },
+      {
+        "url": "https://example.com/a%20b.jpg",
+        "valid": true,
+        "why": "Prozent-Kodierung im Pfad"
+      },
+      {
+        "url": "https://example.com/p?width=200&height=300",
+        "valid": true,
+        "why": "mehrere Parameter"
+      },
+      {
+        "url": "https://example.com/x?a=1;b=2",
+        "valid": true,
+        "why": "Semikolon als Trenner, harmlos"
+      },
+      {
+        "url": "https://example.com/x?name=cover",
+        "valid": true,
+        "why": "name allein ist kein Zugangsname"
+      },
+      {
+        "url": "https://example.com/livestock/a.jpg",
+        "valid": true,
+        "why": "Segment nur aehnlich wie live"
+      },
+      {
+        "url": "https://example.com/images/series-cover.jpg",
+        "valid": true,
+        "why": "Segment ist nicht exakt series"
+      },
+      {
+        "url": "https://example.com/x?%2570assword=1",
+        "valid": true,
+        "why": "doppelt kodiert: nur einmal dekodiert, Name bleibt %70assword"
+      },
+      {
+        "url": "https://example.com:443/x.png",
+        "valid": true,
+        "why": "Port 443"
+      },
+      {
+        "url": "http://example.com:65535/x",
+        "valid": true,
+        "why": "hoechster Port"
+      },
+      {
+        "url": "https://xn--bcher-kva.example.org/x.png",
+        "valid": true,
+        "why": "Punycode-Host"
+      },
+      {
+        "url": "http://8.8.8.8/x.png",
+        "valid": true,
+        "why": "oeffentliche IPv4"
+      },
+      {
+        "url": "http://93.184.216.34/x.png",
+        "valid": true,
+        "why": "oeffentliche IPv4"
+      },
+      {
+        "url": "http://198.51.101.1/x",
+        "valid": true,
+        "why": "knapp ausserhalb 198.51.100.0/24"
+      },
+      {
+        "url": "http://203.0.114.1/x",
+        "valid": true,
+        "why": "knapp ausserhalb 203.0.113.0/24"
+      },
+      {
+        "url": "http://172.32.0.1/x",
+        "valid": true,
+        "why": "knapp ausserhalb 172.16.0.0/12"
+      },
+      {
+        "url": "http://100.128.0.1/x",
+        "valid": true,
+        "why": "knapp ausserhalb 100.64.0.0/10"
+      },
+      {
+        "url": "http://169.255.0.1/x",
+        "valid": true,
+        "why": "knapp ausserhalb 169.254.0.0/16"
+      },
+      {
+        "url": "http://11.0.0.1/x",
+        "valid": true,
+        "why": "knapp ausserhalb 10.0.0.0/8"
+      },
+      {
+        "url": "http://[2001:4860:4860::8888]/x.png",
+        "valid": true,
+        "why": "oeffentliche IPv6"
+      },
+      {
+        "url": "http://[2600::1]/x.png",
+        "valid": true,
+        "why": "oeffentliche IPv6"
+      },
+      {
+        "url": "http://[2001:1::1]/x.png",
+        "valid": true,
+        "why": "knapp ausserhalb 2001::/32"
+      },
+      {
+        "url": "http://127.0.0.1.nip.io/x.png",
+        "valid": true,
+        "why": "Restrisiko: DNS-Name mit Loopback-Aufloesung nicht ausschliessbar"
+      },
+      {
+        "url": "http://localtest.me/x.png",
+        "valid": true,
+        "why": "Restrisiko: DNS-Name mit Loopback-Aufloesung nicht ausschliessbar"
+      },
+      {
+        "url": "javascript:alert(1)",
+        "valid": false,
+        "why": "Schema javascript"
+      },
+      {
+        "url": "file:///etc/passwd",
+        "valid": false,
+        "why": "Schema file"
+      },
+      {
+        "url": "data:image/png;base64,AAAA",
+        "valid": false,
+        "why": "Schema data"
+      },
+      {
+        "url": "ftp://example.com/x.png",
+        "valid": false,
+        "why": "Schema ftp"
+      },
+      {
+        "url": "//example.com/a.png",
+        "valid": false,
+        "why": "schemalos"
+      },
+      {
+        "url": "HTTPS://example.com/x.png",
+        "valid": false,
+        "why": "Schema gross"
+      },
+      {
+        "url": "https://user:pass@example.com/x.png",
+        "valid": false,
+        "why": "Userinfo"
+      },
+      {
+        "url": "https://user@example.com/x.png",
+        "valid": false,
+        "why": "Userinfo ohne Passwort"
+      },
+      {
+        "url": "https://example.com/x.png#a",
+        "valid": false,
+        "why": "Fragment"
+      },
+      {
+        "url": "https://example.com/x.png#",
+        "valid": false,
+        "why": "leeres Fragment"
+      },
+      {
+        "url": "https://example.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "valid": false,
+        "why": "513 Zeichen"
+      },
+      {
+        "url": "",
+        "valid": false,
+        "why": "leer"
+      },
+      {
+        "url": "https://exa mple.com/x.png",
+        "valid": false,
+        "why": "Leerzeichen"
+      },
+      {
+        "url": "https://example.com/\n",
+        "valid": false,
+        "why": "LF"
+      },
+      {
+        "url": "https://example.com/x.png\n",
+        "valid": false,
+        "why": "angehaengtes LF"
+      },
+      {
+        "url": "https://bücher.example.org/x.png",
+        "valid": false,
+        "why": "Nicht-ASCII"
+      },
+      {
+        "url": "https:///x.png",
+        "valid": false,
+        "why": "Host leer"
+      },
+      {
+        "url": "https://example.com\\@evil.com/",
+        "valid": false,
+        "why": "Backslash"
+      },
+      {
+        "url": "http://example.com./x",
+        "valid": false,
+        "why": "Punkt am Ende"
+      },
+      {
+        "url": "http://-bad.example.com/x",
+        "valid": false,
+        "why": "Label mit Bindestrich"
+      },
+      {
+        "url": "http://[example.com]/",
+        "valid": false,
+        "why": "Klammern um Hostnamen"
+      },
+      {
+        "url": "http://[8.8.8.8]/x",
+        "valid": false,
+        "why": "Klammern um IPv4"
+      },
+      {
+        "url": "http://[::1/x",
+        "valid": false,
+        "why": "Klammer offen"
+      },
+      {
+        "url": "http://::1]/x",
+        "valid": false,
+        "why": "Klammer zu ohne auf"
+      },
+      {
+        "url": "http://[::1]x/",
+        "valid": false,
+        "why": "Zeichen nach Klammer"
+      },
+      {
+        "url": "http://[fe80::1%25eth0]/x",
+        "valid": false,
+        "why": "Zone-ID"
+      },
+      {
+        "url": "http://example.com:/x",
+        "valid": false,
+        "why": "Doppelpunkt ohne Port"
+      },
+      {
+        "url": "http://example.com:0/x",
+        "valid": false,
+        "why": "Port 0"
+      },
+      {
+        "url": "http://example.com:080/x",
+        "valid": false,
+        "why": "fuehrende Null"
+      },
+      {
+        "url": "http://example.com:00080/x",
+        "valid": false,
+        "why": "fuehrende Nullen"
+      },
+      {
+        "url": "http://example.com:65536/x",
+        "valid": false,
+        "why": "Port zu gross"
+      },
+      {
+        "url": "http://example.com:99999/x",
+        "valid": false,
+        "why": "Port zu gross"
+      },
+      {
+        "url": "http://example.com:123456/x",
+        "valid": false,
+        "why": "sechs Ziffern"
+      },
+      {
+        "url": "http://example.com:1a/x",
+        "valid": false,
+        "why": "Port mit Buchstabe"
+      },
+      {
+        "url": "http://example.com:+80/x",
+        "valid": false,
+        "why": "Port mit Vorzeichen"
+      },
+      {
+        "url": "http://[2001:4860::1]:/x",
+        "valid": false,
+        "why": "IPv6 Doppelpunkt ohne Port"
+      },
+      {
+        "url": "http://[2001:4860::1]:0/x",
+        "valid": false,
+        "why": "IPv6 Port 0"
+      },
+      {
+        "url": "http://0.1.2.3/x",
+        "valid": false,
+        "why": "0.0.0.0/8"
+      },
+      {
+        "url": "http://10.0.0.5/x",
+        "valid": false,
+        "why": "10.0.0.0/8"
+      },
+      {
+        "url": "http://10.255.255.255/x",
+        "valid": false,
+        "why": "10/8 Ende"
+      },
+      {
+        "url": "http://100.64.0.1/x",
+        "valid": false,
+        "why": "100.64.0.0/10"
+      },
+      {
+        "url": "http://100.127.255.255/x",
+        "valid": false,
+        "why": "100.64/10 Ende"
+      },
+      {
+        "url": "http://127.0.0.1/x",
+        "valid": false,
+        "why": "127.0.0.0/8"
+      },
+      {
+        "url": "http://127.255.255.254/x",
+        "valid": false,
+        "why": "127/8 Ende"
+      },
+      {
+        "url": "http://169.254.169.254/latest",
+        "valid": false,
+        "why": "169.254.0.0/16"
+      },
+      {
+        "url": "http://172.16.0.1/x",
+        "valid": false,
+        "why": "172.16.0.0/12"
+      },
+      {
+        "url": "http://172.31.255.255/x",
+        "valid": false,
+        "why": "172.16/12 Ende"
+      },
+      {
+        "url": "http://192.0.0.1/x",
+        "valid": false,
+        "why": "192.0.0.0/24"
+      },
+      {
+        "url": "http://192.0.2.1/x",
+        "valid": false,
+        "why": "192.0.2.0/24"
+      },
+      {
+        "url": "http://192.88.99.1/x",
+        "valid": false,
+        "why": "192.88.99.0/24"
+      },
+      {
+        "url": "http://192.168.1.1/x",
+        "valid": false,
+        "why": "192.168.0.0/16"
+      },
+      {
+        "url": "http://198.18.0.1/x",
+        "valid": false,
+        "why": "198.18.0.0/15"
+      },
+      {
+        "url": "http://198.19.255.255/x",
+        "valid": false,
+        "why": "198.18/15 Ende"
+      },
+      {
+        "url": "http://198.51.100.7/x",
+        "valid": false,
+        "why": "198.51.100.0/24"
+      },
+      {
+        "url": "http://203.0.113.9/x",
+        "valid": false,
+        "why": "203.0.113.0/24"
+      },
+      {
+        "url": "http://224.0.0.1/x",
+        "valid": false,
+        "why": "224.0.0.0/4 Multicast"
+      },
+      {
+        "url": "http://239.255.255.250/x",
+        "valid": false,
+        "why": "Multicast Ende"
+      },
+      {
+        "url": "http://240.0.0.1/x",
+        "valid": false,
+        "why": "240.0.0.0/4"
+      },
+      {
+        "url": "http://255.255.255.255/x",
+        "valid": false,
+        "why": "Broadcast"
+      },
+      {
+        "url": "http://0.0.0.0/x",
+        "valid": false,
+        "why": "unspezifiziert"
+      },
+      {
+        "url": "http://2130706433/x",
+        "valid": false,
+        "why": "Dezimal-IP"
+      },
+      {
+        "url": "http://0x7f.1/x",
+        "valid": false,
+        "why": "Hex-IP"
+      },
+      {
+        "url": "http://127.1/x",
+        "valid": false,
+        "why": "Kurz-IP"
+      },
+      {
+        "url": "http://010.0.0.1/x",
+        "valid": false,
+        "why": "fuehrende Null"
+      },
+      {
+        "url": "http://8.8.8.256/x",
+        "valid": false,
+        "why": "Oktett > 255"
+      },
+      {
+        "url": "http://1.2.3/x",
+        "valid": false,
+        "why": "drei Oktette"
+      },
+      {
+        "url": "http://8.8.8.8.8/x",
+        "valid": false,
+        "why": "fuenf Oktette"
+      },
+      {
+        "url": "http://[::]/x",
+        "valid": false,
+        "why": "::/128"
+      },
+      {
+        "url": "http://[::1]/x",
+        "valid": false,
+        "why": "::1/128"
+      },
+      {
+        "url": "http://[::808:808]/x",
+        "valid": false,
+        "why": "::/96 IPv4-kompatibel"
+      },
+      {
+        "url": "http://[::ffff:8.8.8.8]/x",
+        "valid": false,
+        "why": "::ffff:0:0/96 gemappt, oeffentlich"
+      },
+      {
+        "url": "http://[::ffff:127.0.0.1]/x",
+        "valid": false,
+        "why": "gemappt Loopback"
+      },
+      {
+        "url": "http://[::ffff:7f00:1]/x",
+        "valid": false,
+        "why": "gemappt hex"
+      },
+      {
+        "url": "http://[64:ff9b::808:808]/x",
+        "valid": false,
+        "why": "NAT64"
+      },
+      {
+        "url": "http://[64:ff9b:1::1]/x",
+        "valid": false,
+        "why": "64:ff9b:1::/48"
+      },
+      {
+        "url": "http://[100::1]/x",
+        "valid": false,
+        "why": "100::/64"
+      },
+      {
+        "url": "http://[2001::1]/x",
+        "valid": false,
+        "why": "Teredo 2001::/32"
+      },
+      {
+        "url": "http://[2001:db8::1]/x",
+        "valid": false,
+        "why": "Dokumentation"
+      },
+      {
+        "url": "http://[2002:808:808::1]/x",
+        "valid": false,
+        "why": "6to4"
+      },
+      {
+        "url": "http://[fc00::1]/x",
+        "valid": false,
+        "why": "fc00::/7"
+      },
+      {
+        "url": "http://[fd12::1]/x",
+        "valid": false,
+        "why": "ULA"
+      },
+      {
+        "url": "http://[fe80::1]/x",
+        "valid": false,
+        "why": "Link-Local"
+      },
+      {
+        "url": "http://[febf::1]/x",
+        "valid": false,
+        "why": "Link-Local Ende"
+      },
+      {
+        "url": "http://[ff02::1]/x",
+        "valid": false,
+        "why": "Multicast"
+      },
+      {
+        "url": "http://[fec0::1]/x",
+        "valid": false,
+        "why": "fec0::/10 Site-Local"
+      },
+      {
+        "url": "http://[2001:10::1]/x",
+        "valid": false,
+        "why": "2001:10::/28"
+      },
+      {
+        "url": "http://[2001:1f::1]/x",
+        "valid": false,
+        "why": "2001:10::/28 Ende"
+      },
+      {
+        "url": "http://[2001:20::1]/x",
+        "valid": true,
+        "why": "knapp ausserhalb 2001:10::/28"
+      },
+      {
+        "url": "http://[::ffff:0:0:1]/x",
+        "valid": false,
+        "why": "::ffff:0:0:0/96 (SIIT)"
+      },
+      {
+        "url": "http://Example.COM/x.png",
+        "valid": true,
+        "why": "Host gross geschrieben"
+      },
+      {
+        "url": "http://X.TEST/x",
+        "valid": false,
+        "why": "Host gross: .TEST"
+      },
+      {
+        "url": "http://LOCALHOST/x",
+        "valid": false,
+        "why": "Host gross: LOCALHOST"
+      },
+      {
+        "url": "http://localhost/x",
+        "valid": false,
+        "why": "localhost"
+      },
+      {
+        "url": "http://a.localhost/x",
+        "valid": false,
+        "why": "Unterdomain von localhost"
+      },
+      {
+        "url": "http://nas/x",
+        "valid": false,
+        "why": "ein Label"
+      },
+      {
+        "url": "http://x.test/x",
+        "valid": false,
+        "why": ".test"
+      },
+      {
+        "url": "http://x.invalid/x",
+        "valid": false,
+        "why": ".invalid"
+      },
+      {
+        "url": "http://x.example/x",
+        "valid": false,
+        "why": ".example"
+      },
+      {
+        "url": "http://printer.local/x",
+        "valid": false,
+        "why": ".local"
+      },
+      {
+        "url": "http://host.internal/x",
+        "valid": false,
+        "why": ".internal"
+      },
+      {
+        "url": "http://x.lan/x",
+        "valid": false,
+        "why": ".lan"
+      },
+      {
+        "url": "http://x.home.arpa/x",
+        "valid": false,
+        "why": ".home.arpa"
+      },
+      {
+        "url": "http://x.localdomain/x",
+        "valid": false,
+        "why": ".localdomain"
+      },
+      {
+        "url": "http://x.corp/x",
+        "valid": false,
+        "why": ".corp"
+      },
+      {
+        "url": "http://a.b.test/x",
+        "valid": false,
+        "why": "tiefe Unterdomaene von .test"
+      },
+      {
+        "url": "https://example.com/x.png?username=a",
+        "valid": false,
+        "why": "username"
+      },
+      {
+        "url": "https://example.com/x.png?user=a",
+        "valid": false,
+        "why": "user"
+      },
+      {
+        "url": "https://example.com/x.png?usr=a",
+        "valid": false,
+        "why": "usr"
+      },
+      {
+        "url": "https://example.com/x.png?login=a",
+        "valid": false,
+        "why": "login"
+      },
+      {
+        "url": "https://example.com/x.png?uid=1",
+        "valid": false,
+        "why": "uid"
+      },
+      {
+        "url": "https://example.com/x.png?user_name=a",
+        "valid": false,
+        "why": "user_name"
+      },
+      {
+        "url": "https://example.com/x.png?User-Name=a",
+        "valid": false,
+        "why": "User-Name"
+      },
+      {
+        "url": "https://example.com/x.png?password=a",
+        "valid": false,
+        "why": "password"
+      },
+      {
+        "url": "https://example.com/x.png?pass=a",
+        "valid": false,
+        "why": "pass"
+      },
+      {
+        "url": "https://example.com/x.png?passwd=a",
+        "valid": false,
+        "why": "passwd"
+      },
+      {
+        "url": "https://example.com/x.png?pw=a",
+        "valid": false,
+        "why": "pw"
+      },
+      {
+        "url": "https://example.com/x.png?pwd=a",
+        "valid": false,
+        "why": "pwd"
+      },
+      {
+        "url": "https://example.com/x.png?token=a",
+        "valid": false,
+        "why": "token"
+      },
+      {
+        "url": "https://example.com/x.png?accesstoken=a",
+        "valid": false,
+        "why": "accesstoken"
+      },
+      {
+        "url": "https://example.com/x.png?access_token=a",
+        "valid": false,
+        "why": "access_token"
+      },
+      {
+        "url": "https://example.com/x.png?access-token=a",
+        "valid": false,
+        "why": "access-token"
+      },
+      {
+        "url": "https://example.com/x.png?key=a",
+        "valid": false,
+        "why": "key"
+      },
+      {
+        "url": "https://example.com/x.png?apikey=a",
+        "valid": false,
+        "why": "apikey"
+      },
+      {
+        "url": "https://example.com/x.png?api_key=a",
+        "valid": false,
+        "why": "api_key"
+      },
+      {
+        "url": "https://example.com/x.png?auth=a",
+        "valid": false,
+        "why": "auth"
+      },
+      {
+        "url": "https://example.com/x.png?authorization=a",
+        "valid": false,
+        "why": "authorization"
+      },
+      {
+        "url": "https://example.com/x.png?secret=a",
+        "valid": false,
+        "why": "secret"
+      },
+      {
+        "url": "https://example.com/x.png?sig=a",
+        "valid": false,
+        "why": "sig"
+      },
+      {
+        "url": "https://example.com/x.png?signature=a",
+        "valid": false,
+        "why": "signature"
+      },
+      {
+        "url": "https://example.com/x.png?X-Amz-Signature=a",
+        "valid": false,
+        "why": "X-Amz-Signature"
+      },
+      {
+        "url": "https://example.com/x.png?session=a",
+        "valid": false,
+        "why": "session"
+      },
+      {
+        "url": "https://example.com/x.png?sid=a",
+        "valid": false,
+        "why": "sid"
+      },
+      {
+        "url": "https://example.com/x.png?xamzcredential=a",
+        "valid": false,
+        "why": "xamzcredential"
+      },
+      {
+        "url": "https://example.com/x.png?X-Amz-Credential=a",
+        "valid": false,
+        "why": "X-Amz-Credential"
+      },
+      {
+        "url": "https://example.com/x.png?x-amz-security-token=a",
+        "valid": false,
+        "why": "x-amz-security-token"
+      },
+      {
+        "url": "https://example.com/x.png?sessionid=a",
+        "valid": false,
+        "why": "sessionid"
+      },
+      {
+        "url": "https://example.com/x.png?session_id=a",
+        "valid": false,
+        "why": "session_id"
+      },
+      {
+        "url": "https://example.com/x.png?Bearer=a",
+        "valid": false,
+        "why": "Bearer"
+      },
+      {
+        "url": "https://example.com/x.png?ticket=a",
+        "valid": false,
+        "why": "ticket"
+      },
+      {
+        "url": "https://example.com/x.png?credential=a",
+        "valid": false,
+        "why": "credential"
+      },
+      {
+        "url": "https://example.com/x.png?Token=a",
+        "valid": false,
+        "why": "Gross-/Kleinschreibung"
+      },
+      {
+        "url": "https://example.com/x.png?a=1&API_KEY=2",
+        "valid": false,
+        "why": "zweiter Parameter"
+      },
+      {
+        "url": "https://example.com/x.png?a=1;token=2",
+        "valid": false,
+        "why": "Semikolon-Trenner"
+      },
+      {
+        "url": "https://example.com/x.png?to+ken=1",
+        "valid": false,
+        "why": "Plus wird Leerzeichen und entfernt"
+      },
+      {
+        "url": "https://example.com/x.png?%74oken=1",
+        "valid": false,
+        "why": "Prozent-kodierter Name"
+      },
+      {
+        "url": "https://example.com/x.png?%70assword=1",
+        "valid": false,
+        "why": "Prozent-kodierter Name"
+      },
+      {
+        "url": "https://example.com/x.png?user",
+        "valid": false,
+        "why": "Name ohne Wert"
+      },
+      {
+        "url": "https://example.com/x.png?a=%zz",
+        "valid": false,
+        "why": "ungueltige %-Folge im Wert"
+      },
+      {
+        "url": "https://example.com/x.png?a=%",
+        "valid": false,
+        "why": "einzelnes Prozentzeichen"
+      },
+      {
+        "url": "https://example.com/x.png?a=%0",
+        "valid": false,
+        "why": "halbe %-Folge"
+      },
+      {
+        "url": "https://example.com/x.png?a=%00",
+        "valid": false,
+        "why": "NUL"
+      },
+      {
+        "url": "https://example.com/x.png?a=%0A",
+        "valid": false,
+        "why": "LF dekodiert"
+      },
+      {
+        "url": "https://example.com/x.png?%00=1",
+        "valid": false,
+        "why": "NUL im Namen"
+      },
+      {
+        "url": "https://example.com/x.png?a=%ff",
+        "valid": false,
+        "why": "ungueltiges UTF-8"
+      },
+      {
+        "url": "https://example.com/x.png?a%zz=1",
+        "valid": false,
+        "why": "ungueltige %-Folge im Namen"
+      },
+      {
+        "url": "https://example.com/Movie/a.png",
+        "valid": false,
+        "why": "Segment gross: Movie"
+      },
+      {
+        "url": "https://example.com/LIVE/a.png",
+        "valid": false,
+        "why": "Segment gross: LIVE"
+      },
+      {
+        "url": "https://example.com/a/x.MP4",
+        "valid": false,
+        "why": "Endung gross: .MP4"
+      },
+      {
+        "url": "https://example.com/a/x.M3U8",
+        "valid": false,
+        "why": "Endung gross"
+      },
+      {
+        "url": "https://example.com/a%2Flive/x.jpg",
+        "valid": false,
+        "why": "%2F vor live"
+      },
+      {
+        "url": "https://example.com/a%2fx.ts",
+        "valid": false,
+        "why": "%2f vor Endung .ts"
+      },
+      {
+        "url": "https://example.com/%2Fmovie/x.jpg",
+        "valid": false,
+        "why": "%2F vor movie"
+      },
+      {
+        "url": "https://example.com/a%2Fb/x.jpg",
+        "valid": true,
+        "why": "%2F, harmlose Segmente"
+      },
+      {
+        "url": "https://example.com/live/a.png",
+        "valid": false,
+        "why": "Segment live"
+      },
+      {
+        "url": "https://example.com/movie/u/p/1.jpg",
+        "valid": false,
+        "why": "Xtream-Muster movie"
+      },
+      {
+        "url": "https://example.com/series/1.jpg",
+        "valid": false,
+        "why": "Segment series"
+      },
+      {
+        "url": "https://example.com/vod/1.jpg",
+        "valid": false,
+        "why": "Segment vod"
+      },
+      {
+        "url": "https://example.com/stream/1.jpg",
+        "valid": false,
+        "why": "Segment stream"
+      },
+      {
+        "url": "https://example.com/hls/1.jpg",
+        "valid": false,
+        "why": "Segment hls"
+      },
+      {
+        "url": "https://example.com/%6Cive/1.jpg",
+        "valid": false,
+        "why": "kodiertes live"
+      },
+      {
+        "url": "https://example.com/a/x.ts",
+        "valid": false,
+        "why": "Endung .ts"
+      },
+      {
+        "url": "https://example.com/a/x.m3u8",
+        "valid": false,
+        "why": "Endung .m3u8"
+      },
+      {
+        "url": "https://example.com/a/x.m3u",
+        "valid": false,
+        "why": "Endung .m3u"
+      },
+      {
+        "url": "https://example.com/a/x.mp4",
+        "valid": false,
+        "why": "Endung .mp4"
+      },
+      {
+        "url": "https://example.com/a/x.mkv",
+        "valid": false,
+        "why": "Endung .mkv"
+      },
+      {
+        "url": "https://example.com/a/x.avi",
+        "valid": false,
+        "why": "Endung .avi"
+      },
+      {
+        "url": "https://example.com/a/x.mp3",
+        "valid": false,
+        "why": "Endung .mp3"
+      },
+      {
+        "url": "https://example.com/a%zz",
+        "valid": false,
+        "why": "ungueltige %-Folge im Pfad"
+      },
+      {
+        "url": "https://example.com/a%00b",
+        "valid": false,
+        "why": "NUL im Pfad"
+      }
+    ]
+  },
+  "app_credential_cases": {
+    "note": "App-seitig (Erwartungen von Hand): nur Pfad und Query, nicht Schema/Host; gross/klein egal; unter 4 Zeichen nur als ganzes Pfadsegment oder ganzer Query-Wert, ab 4 als Teilzeichenkette (roh oder einmal dekodiert); leer/null zaehlt nicht.",
+    "cases": [
+      {
+        "url": "https://img.example.com/covers/a.jpg",
+        "username": "alice",
+        "password": "hunter2",
+        "drop": false,
+        "why": "harmlos"
+      },
+      {
+        "url": "https://img.example.com/alice/a.jpg",
+        "username": "alice",
+        "password": "hunter2",
+        "drop": true,
+        "why": "Benutzername als Segment"
+      },
+      {
+        "url": "https://img.example.com/covers/alice.jpg",
+        "username": "alice",
+        "password": "hunter2",
+        "drop": true,
+        "why": "Benutzername als Teilstring (>= 4)"
+      },
+      {
+        "url": "https://img.example.com/covers/a.jpg?x=hunter2",
+        "username": "alice",
+        "password": "hunter2",
+        "drop": true,
+        "why": "Passwort als Query-Wert"
+      },
+      {
+        "url": "https://img.example.com/covers/a.jpg?x=pre-hunter2-post",
+        "username": "alice",
+        "password": "hunter2",
+        "drop": true,
+        "why": "Passwort als Teilstring in Query"
+      },
+      {
+        "url": "https://img.example.com/covers/a%6Cice.jpg",
+        "username": "alice",
+        "password": "hunter2",
+        "drop": true,
+        "why": "einfach kodiert"
+      },
+      {
+        "url": "https://img.example.com/ALICE/a.jpg",
+        "username": "alice",
+        "password": "hunter2",
+        "drop": true,
+        "why": "Grossbuchstaben in URL"
+      },
+      {
+        "url": "https://img.example.com/alice/a.jpg",
+        "username": "ALICE",
+        "password": "x",
+        "drop": true,
+        "why": "Grossbuchstaben im Namen"
+      },
+      {
+        "url": "https://img.example.com/M%C3%BCller/a.jpg",
+        "username": "Müller",
+        "password": "x",
+        "drop": true,
+        "why": "Umlaut, einfach kodiert"
+      },
+      {
+        "url": "https://img.example.com/m%C3%9CLLER/a.jpg",
+        "username": "Müller",
+        "password": "x",
+        "drop": true,
+        "why": "Umlaut, Gross/Klein gemischt"
+      },
+      {
+        "url": "https://img.example.com/p%40ss/a.jpg",
+        "username": "u",
+        "password": "p@ss",
+        "drop": true,
+        "why": "Sonderzeichen @, 4 Zeichen"
+      },
+      {
+        "url": "https://img.example.com/x/a%20b/y.jpg",
+        "username": "a b",
+        "password": "x",
+        "drop": true,
+        "why": "kurz mit Leerzeichen als ganzes Segment"
+      },
+      {
+        "url": "https://img.example.com/a%20b.jpg",
+        "username": "a b",
+        "password": "x",
+        "drop": false,
+        "why": "kurz mit Leerzeichen nur Teilstring"
+      },
+      {
+        "url": "https://img.example.com/x.jpg?k=a+b",
+        "username": "a+b",
+        "password": "x",
+        "drop": true,
+        "why": "kurz mit Plus als ganzer Query-Wert, roh"
+      },
+      {
+        "url": "https://img.example.com/x.jpg?k=a%2Bb",
+        "username": "a+b",
+        "password": "x",
+        "drop": true,
+        "why": "kurz mit Plus, kodiert"
+      },
+      {
+        "url": "https://img.example.com/a/x.jpg",
+        "username": "a",
+        "password": "x",
+        "drop": true,
+        "why": "kurz als ganzes Segment"
+      },
+      {
+        "url": "https://img.example.com/data/x.jpg",
+        "username": "a",
+        "password": "x",
+        "drop": false,
+        "why": "kurz nur als Teilstring: kein Treffer"
+      },
+      {
+        "url": "https://img.example.com/x.jpg?k=a",
+        "username": "a",
+        "password": "x",
+        "drop": true,
+        "why": "kurz als ganzer Query-Wert"
+      },
+      {
+        "url": "https://img.example.com/x.jpg?k=abc",
+        "username": "a",
+        "password": "x",
+        "drop": false,
+        "why": "kurz nur Teilstring in Query"
+      },
+      {
+        "url": "https://img.example.com/x.jpg",
+        "username": "x",
+        "password": "com",
+        "drop": false,
+        "why": "com steht nur im Host"
+      },
+      {
+        "url": "https://img.example.com/x.jpg",
+        "username": "x",
+        "password": "http",
+        "drop": false,
+        "why": "http steht nur im Schema"
+      },
+      {
+        "url": "https://img.example.com/x.jpg?u=http",
+        "username": "x",
+        "password": "http",
+        "drop": true,
+        "why": "http als Query-Wert"
+      },
+      {
+        "url": "https://alice.example.com/x.jpg",
+        "username": "alice",
+        "password": "x",
+        "drop": false,
+        "why": "Name nur im Host"
+      },
+      {
+        "url": "https://img.example.com/x.jpg",
+        "username": "",
+        "password": null,
+        "drop": false,
+        "why": "leer und null"
+      },
+      {
+        "url": "https://img.example.com/x.jpg?k=",
+        "username": "",
+        "password": "",
+        "drop": false,
+        "why": "leere Werte zaehlen nicht"
+      },
+      {
+        "url": "https://img.example.com/%2568unter2/x.jpg",
+        "username": "x",
+        "password": "hunter2",
+        "drop": false,
+        "why": "Restrisiko: doppelt kodiert wird nicht erkannt"
+      },
+      {
+        "url": "https://img.example.com/hun/ter2/x.jpg",
+        "username": "x",
+        "password": "hunter2",
+        "drop": false,
+        "why": "Restrisiko: ueber Segmente verteilt"
+      }
+    ]
+  },
+  "strip_unknown": {
+    "note": "Integration verwirft unbekannte Felder in allen Objekten.",
+    "cases": [
+      {
+        "name": "state",
+        "input": {
+          "v": 1,
+          "type": "state",
+          "rev": 2,
+          "status": "playing",
+          "foo": 1,
+          "picture": "https://img.example.com/c.jpg",
+          "media": {
+            "kind": "movie",
+            "title": "T",
+            "x": 5
+          }
+        },
+        "expect": {
+          "v": 1,
+          "type": "state",
+          "rev": 2,
+          "status": "playing",
+          "picture": "https://img.example.com/c.jpg",
+          "media": {
+            "kind": "movie",
+            "title": "T"
+          }
+        }
+      },
+      {
+        "name": "event",
+        "input": {
+          "v": 1,
+          "type": "event",
+          "name": "playlist_failed",
+          "error": "other",
+          "z": 1
+        },
+        "expect": {
+          "v": 1,
+          "type": "event",
+          "name": "playlist_failed",
+          "error": "other"
+        }
+      },
+      {
+        "name": "unknown_type",
+        "input": {
+          "v": 1,
+          "type": "future",
+          "a": 1
+        },
+        "expect": {}
+      },
+      {
+        "name": "unknown_event_name",
+        "input": {
+          "v": 1,
+          "type": "event",
+          "name": "something_new",
+          "a": 1
+        },
+        "expect": {}
+      },
+      {
+        "name": "unpair",
+        "input": {
+          "v": 1,
+          "type": "unpair",
+          "a": 1
+        },
+        "expect": {
+          "v": 1,
+          "type": "unpair"
+        }
+      }
+    ],
+    "input": {
+      "v": 1,
+      "type": "heartbeat",
+      "app_version": "0.3.0",
+      "platform": "tizen",
+      "state_rev": 1,
+      "extra": 1,
+      "sub": {
+        "expires": null,
+        "x": 1
+      },
+      "playlist": {
+        "live": 5,
+        "address": "https://secret.example/p",
+        "error": "none"
+      }
+    },
+    "expect": {
+      "v": 1,
+      "type": "heartbeat",
+      "app_version": "0.3.0",
+      "platform": "tizen",
+      "state_rev": 1,
+      "sub": {
+        "expires": null
+      },
+      "playlist": {
+        "live": 5,
+        "error": "none"
+      }
+    }
+  },
   "payloads": {
     "note": "expect null = gueltig; sonst Grundcode (bei HA: bad_payload bzw. unsupported_version).",
     "cases": [
@@ -1093,6 +2422,495 @@
           2
         ],
         "expect": "not_object"
+      },
+      {
+        "name": "picture_ok",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 7,
+          "status": "playing",
+          "media": {
+            "kind": "episode",
+            "title": "Pilot",
+            "series": "Beispielserie",
+            "season": 1,
+            "episode": 2,
+            "duration_ms": 2700000,
+            "position_ms": 125000
+          },
+          "picture": "https://img.example.com/covers/123.jpg"
+        },
+        "expect": null
+      },
+      {
+        "name": "picture_without_media_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 8,
+          "status": "idle",
+          "picture": "https://img.example.com/covers/123.jpg"
+        },
+        "expect": "picture_without_media"
+      },
+      {
+        "name": "picture_javascript_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 7,
+          "status": "playing",
+          "media": {
+            "kind": "episode",
+            "title": "Pilot",
+            "series": "Beispielserie",
+            "season": 1,
+            "episode": 2,
+            "duration_ms": 2700000,
+            "position_ms": 125000
+          },
+          "picture": "javascript:alert(1)"
+        },
+        "expect": "picture"
+      },
+      {
+        "name": "picture_userinfo_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 7,
+          "status": "playing",
+          "media": {
+            "kind": "episode",
+            "title": "Pilot",
+            "series": "Beispielserie",
+            "season": 1,
+            "episode": 2,
+            "duration_ms": 2700000,
+            "position_ms": 125000
+          },
+          "picture": "https://u:p@img.example.com/a.jpg"
+        },
+        "expect": "picture"
+      },
+      {
+        "name": "picture_private_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 7,
+          "status": "playing",
+          "media": {
+            "kind": "episode",
+            "title": "Pilot",
+            "series": "Beispielserie",
+            "season": 1,
+            "episode": 2,
+            "duration_ms": 2700000,
+            "position_ms": 125000
+          },
+          "picture": "http://192.168.1.5/a.jpg"
+        },
+        "expect": "picture"
+      },
+      {
+        "name": "picture_not_string_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 7,
+          "status": "playing",
+          "media": {
+            "kind": "episode",
+            "title": "Pilot",
+            "series": "Beispielserie",
+            "season": 1,
+            "episode": 2,
+            "duration_ms": 2700000,
+            "position_ms": 125000
+          },
+          "picture": 5
+        },
+        "expect": "picture"
+      },
+      {
+        "name": "playlist_updated_arabic_digits_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "updated": "٢٠٢٦-10-15T08:30:00Z"
+          }
+        },
+        "expect": "playlist_updated"
+      },
+      {
+        "name": "heartbeat_expires_fullwidth_digits_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "２０２７-03-31"
+          }
+        },
+        "expect": "sub_expires"
+      },
+      {
+        "name": "playlist_unknown_field_ok",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "live": 1,
+            "address": "x"
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "playlist_ok",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "updated": "2026-10-15T08:30:00Z",
+            "live": 1200,
+            "movies": 5400,
+            "series": 800,
+            "error": "none"
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "playlist_empty_ok",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {}
+        },
+        "expect": null
+      },
+      {
+        "name": "playlist_updated_null_ok",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "updated": null
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "playlist_max_ok",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "live": 999999,
+            "movies": 0,
+            "series": 999999
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "playlist_live_too_big_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "live": 1000000
+          }
+        },
+        "expect": "playlist_live"
+      },
+      {
+        "name": "playlist_negative_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "movies": -1
+          }
+        },
+        "expect": "playlist_movies"
+      },
+      {
+        "name": "playlist_float_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "series": 1.0
+          }
+        },
+        "expect": "playlist_series"
+      },
+      {
+        "name": "playlist_updated_no_z_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "updated": "2026-10-15T08:30:00"
+          }
+        },
+        "expect": "playlist_updated"
+      },
+      {
+        "name": "playlist_updated_offset_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "updated": "2026-10-15T08:30:00+02:00"
+          }
+        },
+        "expect": "playlist_updated"
+      },
+      {
+        "name": "playlist_updated_bad_date_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "updated": "2026-02-30T08:30:00Z"
+          }
+        },
+        "expect": "playlist_updated"
+      },
+      {
+        "name": "playlist_updated_lf_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "updated": "2026-10-15T08:30:00Z\n"
+          }
+        },
+        "expect": "playlist_updated"
+      },
+      {
+        "name": "playlist_error_unknown_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": {
+            "error": "http_404"
+          }
+        },
+        "expect": "playlist_error"
+      },
+      {
+        "name": "playlist_not_object_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          },
+          "playlist": [
+            1
+          ]
+        },
+        "expect": "playlist"
+      },
+      {
+        "name": "event_playlist_refreshed_ok",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "playlist_refreshed"
+        },
+        "expect": null
+      },
+      {
+        "name": "event_playlist_failed_ok",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "playlist_failed",
+          "error": "unauthorized"
+        },
+        "expect": null
+      },
+      {
+        "name": "event_playlist_failed_no_error_bad",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "playlist_failed"
+        },
+        "expect": "error"
+      },
+      {
+        "name": "event_playlist_failed_none_bad",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "playlist_failed",
+          "error": "none"
+        },
+        "expect": "error"
+      },
+      {
+        "name": "event_playlist_failed_unknown_error_bad",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "playlist_failed",
+          "error": "x"
+        },
+        "expect": "error"
+      },
+      {
+        "name": "event_error_on_other_bad",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "playlist_refreshed",
+          "error": "other"
+        },
+        "expect": "error"
       }
     ]
   },

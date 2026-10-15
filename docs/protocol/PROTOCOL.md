@@ -348,13 +348,15 @@ Formale Schemas stehen in Abschnitt 5.6, ausführbar in `reference.py` (`validat
 
 ### 5.1 Einwilligungsstufen
 
-Standard ist **aus**; nichts wird gesendet, bevor der Nutzer eingewilligt hat. Drei unabhängige Schalter in der App (die Stufen bauen aufeinander auf):
+Standard ist **aus**; nichts wird gesendet, bevor der Nutzer eingewilligt hat. Fünf Schalter in der App (die Stufen bauen aufeinander auf; Erweiterung „Bild und Playlist“ additiv in `v1`):
 
 | Schalter | Wirkung | Voraussetzung |
 |---|---|---|
 | `share_status` | App-Status (`status`), `heartbeat`, Ereignisse **ohne** Inhaltsangaben | Kopplung |
 | `share_titles` | `media` (Titel, Sender, Serie/Staffel/Folge, Typ, Position, Laufzeit) in `state` und Ereignissen | `share_status` |
 | `share_subscription` | `sub` (Abo-Ablauf, Verbindungen) im `heartbeat` | `share_status` |
+| `share_artwork` | `picture` (Cover-/Logo-URL) in `state` | `share_titles` |
+| `share_playlist` | `playlist` im `heartbeat`, Ereignisse `playlist_refreshed`/`playlist_failed` | `share_status` |
 
 Ohne `share_status` sendet die App gar nichts (auch keinen Herzschlag). Ohne `share_titles` fehlt `media` überall. Der Steuerkanal (Abschnitt 6) braucht zusätzlich den Schalter `allow_control`.
 
@@ -367,6 +369,7 @@ Wird bei jeder Änderung gesendet (Start, Pause, Titelwechsel, Seek, Ende, App-S
 | `rev` | int | ja | 0 … 2^53−1; Zähler der gesendeten Zustände seit App-Start, wird in `heartbeat.state_rev` wiederholt | status |
 | `status` | string | ja | `idle` (App aktiv, nichts läuft), `buffering`, `playing`, `paused`, `closed` (App wird ordentlich beendet, Best-Effort) | status |
 | `media` | object | nein | nur bei `status` ∈ `buffering`, `playing`, `paused` | titles |
+| `picture` | string | nein | URL nach 5.2a; nur zusammen mit `media`; höchstens 512 Zeichen | artwork |
 
 `media`:
 
@@ -390,6 +393,46 @@ HA schätzt die Position bei `playing` selbst weiter (Position + Zeit seit Empfa
 - **Nach 90 s Stille:** Zustand und Titel werden verworfen. Der Binär-Sensor „App aktiv“ ist immer verfügbar (aus statt nicht verfügbar).
 - **Abo-Ablauf:** Das Protokoll liefert nur ein Datum; HA setzt den Beginn dieses Tages in der HA-Zeitzone.
 
+### 5.2a `picture` (Cover oder Senderlogo)
+
+Additiv in `v1`: Ältere Integrationen ignorieren das Feld (unbekannte Felder werden ignoriert), ältere Apps senden es nicht (die Integration toleriert sein Fehlen). `picture` ist die URL eines Bildes des **Film-Covers, Serien-Covers oder Senderlogos** und wird nur mit `share_artwork` (Standard aus, setzt `share_titles` voraus) und nur zusammen mit `media` gesendet. Läuft geschützter Inhalt (5.7 Nr. 3), fehlt `picture` ebenso.
+
+Anforderungen (App prüft vor dem Senden, Integration prüft beim Empfang **dasselbe strikt**). **Maßgeblich ist `reference.py: picture_ok` mit den festen Erwartungen in `vectors.json` (`picture_urls`)**; das JSON-Schema (5.6) ist nur ein Vorfilter. Die Prüfung ist rein syntaktisch, ohne DNS-Auflösung, und lässt sich in Python, Kotlin und JavaScript ohne Bibliotheksfunktionen wie `is_global` nachbauen.
+
+1. **Zeichen und Länge:** 1–512 Zeichen, nur ASCII `0x21`–`0x7E` (kein Leerzeichen, keine Steuerzeichen, kein Backslash, kein `#`/Fragment). Nicht-ASCII-Hosts als Punycode, Pfade und Werte prozentkodiert.
+2. **Aufbau:** `^(https?)://([^/?]*)([^?]*)(\?(.*))?` mit **kleingeschriebenem** Schema `http` oder `https` (alles andere, auch `javascript:`, `file:`, `data:`, `ftp:`, `//…` und `HTTPS:`, ist ungültig). Prüfungen mit **ganzer Übereinstimmung** (`fullmatch`, `\A…\z`), nie mit `$` (kann ein angehängtes LF durchlassen).
+3. **Userinfo:** kein `@` in der Autorität.
+4. **Host und Port:**
+   - Eckige Klammern **nur** bei einem IPv6-Literal (Hexziffern, `:` und `.` zwischen den Klammern, ohne Zone-ID); Klammern um Hostnamen oder IPv4 sind ungültig, ebenso offene oder nachgestellte Zeichen.
+   - Port optional, **genau** `[1-9][0-9]{0,4}` und ≤ 65535. Ungültig: `:` ohne Ziffern, `:0`, führende Nullen, Vorzeichen, Buchstaben, > 65535.
+   - IPv4-Literal nur strikt dezimal `a.b.c.d` (je `0` oder ohne führende Null, ≤ 255). Dezimal-, Oktal-, Hex- und Kurzschreibweisen (`2130706433`, `0x7f.1`, `127.1`, `010.0.0.1`) sind ungültig (ein Host, dessen letztes Label nur aus Ziffern besteht oder mit `0x` beginnt, ist ungültig).
+   - Hostname: Kleinschreibung, mindestens zwei Labels `[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?`, höchstens 253 Zeichen, kein Punkt am Ende.
+5. **Sperrliste Hostnamen:** `localhost` und alles darunter, sowie die Endungen `.test`, `.invalid`, `.example`, `.local`, `.localhost`, `.internal`, `.lan`, `.home.arpa`, `.localdomain`, `.corp`, `.home`, `.intranet`, `.private`.
+6. **Sperrliste IP-Literale (normativ, keine `is_global`-Funktion):** Eine Adresse in einem dieser Bereiche macht die URL ungültig.
+
+   | IPv4 | IPv6 |
+   |---|---|
+   | 0.0.0.0/8 | ::/128, ::1/128 |
+   | 10.0.0.0/8 | ::/96 (IPv4-kompatibel) |
+   | 100.64.0.0/10 | ::ffff:0:0/96 (IPv4-gemappt, **immer gesperrt**, auch bei öffentlicher IPv4) |
+   | 127.0.0.0/8 | 64:ff9b::/96 (NAT64, gesperrt) |
+   | 169.254.0.0/16 | 64:ff9b:1::/48 |
+   | 172.16.0.0/12 | 100::/64 |
+   | 192.0.0.0/24, 192.0.2.0/24 | 2001::/32 (Teredo) |
+   | 192.88.99.0/24 | 2001:db8::/32 |
+   | 192.168.0.0/16 | 2002::/16 (6to4, gesperrt) |
+   | 198.18.0.0/15, 198.51.100.0/24 | fc00::/7 |
+   | 203.0.113.0/24 | fe80::/10 |
+   | 224.0.0.0/4 (Multicast) | fec0::/10 (Site-Local, veraltet), 2001:10::/28 |
+   | 240.0.0.0/4, 255.255.255.255/32 | ff00::/8 (Multicast), ::ffff:0:0:0/96 (SIIT) |
+
+7. **Query:** Trenner sind `&` **und** `;`; `+` zählt als Leerzeichen; Namen und Werte werden **genau einmal** prozentdekodiert (UTF-8, streng). Eine ungültige %-Folge (`%zz`, `%`, `%0`), ungültiges UTF-8 oder ein NUL-/Steuerzeichen im dekodierten Namen oder Wert macht die **ganze URL ungültig** (auch im Pfad). Der dekodierte Name wird in Kleinbuchstaben umgewandelt, `-`, `_` und Leerzeichen werden entfernt; ist das Ergebnis eines von `username`, `user`, `usr`, `login`, `uid`, `password`, `pass`, `passwd`, `pw`, `pwd`, `token`, `accesstoken`, `key`, `apikey`, `auth`, `authorization`, `secret`, `sig`, `signature`, `xamzsignature`, `xamzcredential`, `xamzsecuritytoken`, `session`, `sessionid`, `sid`, `ticket`, `credential`, `bearer`, ist die URL ungültig (Beispiele: `user_name`, `X-Amz-Signature`, `to+ken`, `%74oken`). Zweifach kodierte Namen (`%2570assword`) werden nur einmal dekodiert und bleiben unauffällig, weil der Bildserver ebenfalls nur einmal dekodiert.
+8. **Pfad:** Der Pfad wird **als Ganzes einmal** prozentdekodiert (ein kodiertes `%2F` wird dabei zum Segmenttrenner) und dann an `/` in Segmente geteilt. Der Vergleich ist **ohne Beachtung der Groß-/Kleinschreibung** (auch Hostnamen werden klein geschrieben verglichen): ist ein Segment genau `live`, `movie`, `series`, `vod`, `stream` oder `hls`, oder endet es auf `.ts`, `.m3u8`, `.m3u`, `.mp4`, `.mkv`, `.avi` oder `.mp3` (also auch `Movie`, `.MP4`, `a%2Flive`), ist die URL ungültig (Stream-/Xtream-Muster wie `/movie/<user>/<pass>/1.mp4`). Die Integration prüft das ohne Kenntnis der Zugangsdaten.
+9. **Herkunft (nur App, Pflicht):** Die URL stammt ausschließlich aus dem Bild-/Logo-Feld des Katalogeintrags, nie aus Stream-, Playlist- oder Anbieter-Zugangs-URLs. Die App **verwirft `picture`**, wenn der Benutzername oder das Passwort des Nutzers (nicht leer) im **Pfad oder in der Query** vorkommt (Schema und Host zählen nicht), **ohne Beachtung der Groß-/Kleinschreibung**: bei weniger als 4 Zeichen nur als **vollständiges Pfadsegment oder vollständiger Query-Wert**, ab 4 Zeichen als **Teilzeichenkette** in Pfad oder Query, jeweils roh oder einmal dekodiert (auch `+` als Leerzeichen); `picture_has_credentials`, Vektoren `app_credential_cases` (kurze Namen `a`, `com`, `http`, Sonderzeichen `p@ss`, `a b`, `a+b`, Umlaute, Großschreibung, Teilstrings). Doppelt kodierte oder auf mehrere Segmente verteilte Werte werden nicht erkannt (Restrisiko, 8.3a). Im Zweifel nicht senden. Ändern oder „Säubern“ der URL ist verboten.
+10. **Unbekannte Felder:** Die App sendet in `playlist`, `media`, `sub` und im Rest der Nachricht nur die hier definierten Felder. Die Integration **verwirft nach erfolgreicher Prüfung unbekannte Felder in allen Objekten** (`state`, `media`, `heartbeat`, `sub`, `playlist`, `event`, `unpair`), speichert und loggt sie nicht. Eine Nachricht mit **unbekanntem `type`** oder ein `event` mit **unbekanntem Namen** wird mit `200 ignored` angenommen und **vollständig verworfen** (nichts gespeichert, nichts geloggt). Vektoren `strip_unknown`.
+
+Die Integration setzt die URL als `entity_picture_remote_url` (HA-Frontend und Clients laden das Bild selbst); sie lädt **keine** Bilder serverseitig und speichert sie nicht. Verletzt `picture` die Regeln: `422 bad_payload` (Sequenz verbraucht). Vektoren: `picture_urls` (204 Fälle mit von Hand eingetragenen Erwartungen, nicht aus der Referenz erzeugt), `app_credential_cases`, `payloads`.
+
 ### 5.3 `heartbeat`
 
 Alle 30 s, solange die App im Vordergrund läuft und `share_status` an ist.
@@ -401,8 +444,19 @@ Alle 30 s, solange die App im Vordergrund läuft und `share_status` an ist.
 | `state_rev` | int | ja | `rev` des zuletzt gesendeten `state` (0, wenn noch keiner) |
 | `ws` | bool | nein | Steuerkanal verbunden |
 | `sub` | object | nein | nur mit `share_subscription` |
+| `playlist` | object | nein | nur mit `share_playlist` |
 
 `sub`: `expires` (string `YYYY-MM-DD`, gültiges Datum, oder `null`), `connections_active` (int 0–99), `connections_max` (int 0–99), alle optional.
+
+`playlist` (additiv in `v1`, Zustand der geladenen Playlist, **keine Adressen, keine Namen von Kategorien oder Titeln**): alle Felder optional:
+
+| Feld | Typ | Grenzen |
+|---|---|---|
+| `updated` | string oder `null` | UTC, genau `YYYY-MM-DDTHH:MM:SSZ` mit ASCII-Ziffern, gültiges Datum und gültige Uhrzeit (kein Offset, kein Bruchteil, kein angehängtes Zeichen) |
+| `live`, `movies`, `series` | int | 0–999999 (Anzahl Einträge) |
+| `error` | string | `none`, `no_network`, `unauthorized`, `server_error`, `connection_lost`, `storage`, `other` |
+
+Der Wert von `error` beschreibt nur die Art des letzten Fehlers, nie den Fehlertext des Anbieters. Unbekannte Felder in `playlist` (und in allen anderen Objekten) sendet die App nie; die Integration verwirft sie (5.2a Nr. 10).
 
 Stimmt `state_rev` nicht mit dem zuletzt von HA verarbeiteten `rev` überein (HA neu gestartet, Meldung verloren), setzt HA in der Antwort `"resync":true`; die App sendet sofort einen vollständigen `state`. HA markiert die Entität als verfügbar, solange Herzschläge eintreffen, und als nicht verfügbar, wenn **90 s** (drei verpasste) nichts Gültiges kommt (Startwerte, am Gerät zu prüfen).
 
@@ -410,9 +464,11 @@ Stimmt `state_rev` nicht mit dem zuletzt von HA verarbeiteten `rev` überein (HA
 
 | Feld | Typ | Pflicht | Grenzen |
 |---|---|---|---|
-| `name` | string | ja | `^[a-z_]{1,32}$`. Bekannt: `playback_started`, `playback_stopped`, `channel_changed`, `trailer_opened`; unbekannte Namen werden angenommen und ignoriert |
+| `name` | string | ja | `^[a-z_]{1,32}$`. Bekannt: `playback_started`, `playback_stopped`, `channel_changed`, `trailer_opened`, `playlist_refreshed`, `playlist_failed`; unbekannte Namen werden angenommen und ignoriert |
 | `reason` | string | nein | nur bei `playback_stopped`: `ended`, `user`, `error` |
 | `media` | object | nein | wie in `state`, nur mit `share_titles` (z. B. `channel_changed`: `{"kind":"live","channel":…}`; `trailer_opened`: `{"kind":"trailer","title":…}`) |
+
+`error` (Pflicht bei `playlist_failed`, dort ein Wert aus der Menge von `playlist.error` außer `none`; sonst verboten): Ereignisse `playlist_refreshed` und `playlist_failed` gibt es nur mit `share_playlist`, ohne weitere Felder (keine Adressen, keine Namen).
 
 Ereignisse tragen in HA nur die erlaubten Felder in das Ereignis `itrend_player_event` auf dem HA-Bus ein.
 
@@ -448,7 +504,8 @@ HA nicht erreichbar, Fehler oder Zeitüberschreitung (5 s): **nichts puffern**, 
     {"properties": {"v": {"const": 1}, "type": {"const": "state"},
        "rev": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
        "status": {"enum": ["idle", "buffering", "playing", "paused", "closed"]},
-       "media": {"$ref": "#/$defs/media"}},
+       "media": {"$ref": "#/$defs/media"},
+       "picture": {"type": "string", "maxLength": 512, "pattern": "^https?://[\\x21-\\x7e]+$"}},
      "required": ["v", "type", "rev", "status"]},
     {"properties": {"v": {"const": 1}, "type": {"const": "heartbeat"},
        "app_version": {"type": "string", "maxLength": 32,
@@ -456,8 +513,14 @@ HA nicht erreichbar, Fehler oder Zeitüberschreitung (5 s): **nichts puffern**, 
        "platform": {"enum": ["android", "tizen"]},
        "state_rev": {"type": "integer", "minimum": 0, "maximum": 9007199254740991},
        "ws": {"type": "boolean"},
+       "playlist": {"type": "object", "properties": {
+          "updated": {"type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+          "live": {"type": "integer", "minimum": 0, "maximum": 999999},
+          "movies": {"type": "integer", "minimum": 0, "maximum": 999999},
+          "series": {"type": "integer", "minimum": 0, "maximum": 999999},
+          "error": {"enum": ["none", "no_network", "unauthorized", "server_error", "connection_lost", "storage", "other"]}}},
        "sub": {"type": "object", "properties": {
-          "expires": {"type": ["string", "null"], "pattern": "^\\d{4}-\\d{2}-\\d{2}$"},
+          "expires": {"type": ["string", "null"], "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
           "connections_active": {"type": "integer", "minimum": 0, "maximum": 99},
           "connections_max": {"type": "integer", "minimum": 0, "maximum": 99}}}},
      "required": ["v", "type", "app_version", "platform", "state_rev"]},
@@ -472,14 +535,14 @@ HA nicht erreichbar, Fehler oder Zeitüberschreitung (5 s): **nichts puffern**, 
 }
 ```
 
-Zusatzregeln, die das Schema nicht ausdrückt (aber `reference.py` prüft): `media` nur bei `status` ∈ `buffering/playing/paused`; `series/season/episode` nur bei `kind = episode`; `channel` nur bei `live`; keine Position oder Laufzeit bei `live`; `position_ms ≤ duration_ms`; Datum `expires` muss existieren; `reason` nur bei `playback_stopped`; Ganzzahlen dürfen keine Gleitkommadarstellung (`5.0`, `5e2`) und keine Booleans sein.
+**Das Schema ist nur ein Vorfilter; maßgeblich sind `reference.py` und die Vektoren.** Die Muster mit `^…$` gelten als ganze Übereinstimmung; Implementierungen MÜSSEN `fullmatch` oder `\A…\z` benutzen (in manchen Engines lässt `$` ein angehängtes LF durch). Ziffern sind überall nur ASCII `[0-9]` (kein `\d`, das Unicode-Ziffern wie `٢` oder `２` annimmt; Vektoren `playlist_updated_arabic_digits_bad`, `heartbeat_expires_fullwidth_digits_bad`). Zusatzregeln, die das Schema nicht ausdrückt (aber `reference.py` prüft): `picture` nur zusammen mit `media` und nach den URL-Regeln aus 5.2a; `error` bei Ereignissen nur bei `playlist_failed`, dort Pflicht und nicht `none`; `media` nur bei `status` ∈ `buffering/playing/paused`; `series/season/episode` nur bei `kind = episode`; `channel` nur bei `live`; keine Position oder Laufzeit bei `live`; `position_ms ≤ duration_ms`; Datum `expires` muss existieren; `reason` nur bei `playback_stopped`; Ganzzahlen dürfen keine Gleitkommadarstellung (`5.0`, `5e2`) und keine Booleans sein.
 
 ### 5.7 Was NIE gesendet wird
 
 Die App DARF NICHT senden, und die Integration DARF NICHT annehmen, speichern oder loggen:
 
 1. Benutzername, Passwort oder sonstige **Zugangsdaten** zum Anbieter; Tokens, Schlüssel, Code der Kopplung.
-2. **Adressen**: Playlist-URL, Xtream-Server-URL, Stream-URLs, Logo- und Bild-URLs, Adresse des Anbieters in jeder Form (auch Teile, Hostnamen).
+2. **Adressen**: Playlist-URL, Xtream-Server-URL, Stream-URLs, Adresse des Anbieters in jeder Form (auch Teile, Hostnamen). **Einzige Ausnahme:** `picture` (5.2a) mit der Bild-/Logo-URL aus dem Katalog, nur mit `share_artwork` und nur nach den dortigen Regeln; auch dann nie Stream-, Playlist- oder Zugangs-URLs. Playlist-Status (`playlist`) enthält nie Adressen, Kategorien- oder Titelnamen.
 3. **Inhalte hinter einer Erwachsenen-PIN**: Läuft ein geschützter Inhalt, sendet die App `status` wie üblich, aber **ohne `media`** und ohne Titel in Ereignissen, **ohne** Kennzeichnung, dass es geschützt ist. Der Zustand ist von „Titel-Freigabe aus“ nicht zu unterscheiden. Auch Trailer-/Suchverläufe dazu entfallen.
 4. Name oder Nummer des Anbieters, Kontonummern, E-Mail, Name des Nutzers, Gerätekennungen des Fernsehers (Seriennummer, MAC, Werbe-ID), Standort, WLAN-Name.
 5. Suchbegriffe, Favoritenlisten, Wiedergabeverlauf als Liste, Playlist-Inhalt, Programmführer (EPG) als Ganzes.
@@ -605,7 +668,7 @@ Ein Angreifer im selben Netz (WLAN, kompromittiertes Gerät) kann Datenverkehr m
 
 ### 8.2 Einwilligung (App)
 
-Vor der ersten Kopplungsanfrage zeigt die App eine Seite, die in einfacher Sprache nennt: was gesendet wird (abhängig von den Schaltern), **dass die Übertragung bei `http` unverschlüsselt ist** (Titel sind im Heimnetz mitlesbar; die Signatur schützt Echtheit, nicht Vertraulichkeit), dass `https` empfohlen ist, dass nichts an iTrend24 oder Dritte geht, dass die Funktion jederzeit trennbar ist. Zustimmung ist ausdrücklich (Schalter/Bestätigung), Standard aus, widerrufbar, und je Schalter einzeln. Der Wortlaut ist rechtlich zu prüfen.
+Vor der ersten Kopplungsanfrage zeigt die App eine Seite, die in einfacher Sprache nennt: was gesendet wird (abhängig von den Schaltern), **dass die Übertragung bei `http` unverschlüsselt ist** (Titel sind im Heimnetz mitlesbar; die Signatur schützt Echtheit, nicht Vertraulichkeit), dass `https` empfohlen ist, dass nichts an iTrend24 oder Dritte geht, dass die Funktion jederzeit trennbar ist. Für `share_artwork` nennt der Text zusätzlich: „Gesendet wird die Adresse (URL) des Cover- oder Senderbildes, wie sie Ihr Anbieter liefert. Home Assistant bzw. Ihre Geräte laden das Bild später von diesem Anbieter-Server; der Anbieter-Server und seine Adresse werden dadurch in Ihrem Heimnetz bzw. in Home Assistant sichtbar, und der Anbieter kann sehen, dass das Bild abgerufen wird.“ Für `share_playlist`: „Gesendet werden Zeitpunkt der letzten Aktualisierung, Anzahl der Einträge und eine Fehlerart, keine Adressen oder Namen.“ Beide Schalter sind einzeln, Standard aus. Zustimmung ist ausdrücklich (Schalter/Bestätigung), Standard aus, widerrufbar, und je Schalter einzeln. Der Wortlaut ist rechtlich zu prüfen.
 
 ### 8.3 Bekannte Restrisiken
 
@@ -618,6 +681,15 @@ Vor der ersten Kopplungsanfrage zeigt die App eine Seite, die in einfacher Sprac
 7. **Nicht-Konstantzeit** bei Potenzen (3.7).
 8. **Quelladresse hinter Proxy** (3.6).
 9. Das Protokoll verhindert nicht, dass ein Nutzer in HA die Zustandsverläufe des Recorders speichert; die Dokumentation weist darauf hin (Titel landen sonst im HA-Verlauf).
+
+### 8.3a Sicherheit und Datenschutz von `picture` (Bild-URL)
+
+- **SSRF:** Würde HA oder eine Erweiterung die URL serverseitig laden, könnte eine manipulierte Meldung (nur mit gültiger Signatur, also vom gekoppelten Gerät) HA auf interne Ziele lenken (Router, Metadaten-Dienste, Loopback). Deshalb: strikte Prüfung nach 5.2a Nr. 6, **kein serverseitiges Laden und kein Speichern** durch die Integration; sie setzt nur `entity_picture_remote_url`, das Bild laden Browser und Clients.
+- **Zugangsdaten in URLs:** Manche Anbieter betten Zugangsdaten in Bild-Adressen ein (Userinfo, Query, Pfad). Die Regeln 3–5 verhindern die erkennbaren Fälle; Pfad-eingebettete Zugangsdaten sind nicht sicher erkennbar, deshalb gilt die Herkunftsregel (nur Katalog-Bildfeld) und im Zweifel nicht senden.
+- **Restrisiken:** (a) HA bzw. die Clients laden das Bild **später** und direkt vom Anbieter-Server: der Anbieter-Host wird für HA (Entitätsattribut, Verlauf, Logs von HA und Browser) sichtbar, der Anbieter sieht Abrufe mit der IP-Adresse des HA-Nutzers; (b) die URL kann trotz Prüfung per DNS auf eine interne Adresse zeigen (**DNS-Rebinding**, die Prüfung ist hostbasiert und löst nichts auf) und wird vom Browser abgerufen, nicht von HA; (c) die URL steht im Entitätsattribut, MUSS wie die Titelattribute vom Recorder ausgenommen sein (nicht dauerhaft speichern) und kann in HA-Dashboards von Dritten mit Zugriff gelesen werden; (d) mit `http` ist die Bild-URL im Netz lesbar. Der Einwilligungstext (8.2) nennt (a).
+- **Weiterleitungen und DNS-Namen:** Browser folgen HTTP-Weiterleitungen des Bildservers (auch auf interne Ziele); DNS-Namen wie `127.0.0.1.nip.io` oder `localtest.me` lösen auf Loopback/intern auf und lassen sich syntaktisch nicht ausschließen (Vektoren markieren das als gültig mit Restrisiko). Die Sperrlisten (`.test`, `.invalid`, `.example`, `.local`, `.internal`, `.lan`, `.home.arpa`, `.localdomain`, `.corp`, `localhost` und Unterdomänen) mindern, beseitigen es nicht. Schutz ist, dass **nur der Browser/Client** lädt, nie die Integration oder HA-Core, und dass die Integration die URL nie selbst abruft.
+- **Pfad-Zugangsdaten:** Die Pfadverbote (5.2a Nr. 8) und die Prüfung gegen Benutzername/Passwort der App (Nr. 9) decken die bekannten Muster ab; Zugangsdaten in unbekannter Form im Pfad bleiben ein Restrisiko, ebenso doppelt kodierte oder auf mehrere Pfadsegmente verteilte Benutzernamen/Passwörter sowie sehr kurze (unter 4 Zeichen), die nur als ganzes Segment oder ganzer Query-Wert erkannt werden.
+- Die Integration DARF die URL nicht ins Log schreiben (8.5).
 
 ### 8.4 Datenschutzanforderungen an die Implementierungen
 
@@ -649,6 +721,7 @@ Abhilfe: Optionen der Integration → „Auch Anfragen von außerhalb des Heimne
 - [ ] Lock je Gerät um Prüfen/Speichern/Setzen von `seq`; Erkennung geklonter Schlüssel (4.3); doppelte JSON-Schlüssel abgelehnt; `name` nach 9.6.
 - [ ] Sequenz: strenge Erhöhung, Reservierung `seq+99` mit Speichern vor Annahme, `409` mit `proof`, Verbrauch auch bei `422`.
 - [ ] Antwort-`proof` nach 4.5, Access-Control-Header am Webhook, `resync`-Logik.
+- [ ] `picture`: strikte Prüfung `picture_ok` (alle `picture_urls`, Sperrliste als CIDR-Tabelle, kein `is_global`), `strip_unknown`, `entity_picture_remote_url` setzen, **nie** serverseitig laden oder speichern, nicht ins Log, vom Recorder ausnehmen; fehlendes `picture`/`playlist` (ältere App) tolerieren; `playlist`-Werte und Ereignisse prüfen.
 - [ ] Schema-Prüfung: alle `payloads.cases` aus `vectors.json`; unbekannte Felder/Typen/Ereignisse angenommen und ignoriert.
 - [ ] Verfügbarkeit 90 s, `unpair`-Behandlung, Löschen entfernt Schlüssel und Webhook.
 - [ ] Logs nach 8.5; keine Inhalte aus 5.7.
@@ -660,7 +733,8 @@ Abhilfe: Optionen der Integration → „Auch Anfragen von außerhalb des Heimne
 - [ ] Webhook-Aufbau (`text/plain`, keine eigenen Header), Signatur über Rohbytes, Sequenzreservierung vor Senden, Abgleich bei `409` mit Beweisprüfung.
 - [ ] Antworten ohne gültigen Beweis zählen als „nicht bestätigt“; 3 in Folge → nur Anzeige „Kopplung erneuern“, nie automatisches Löschen; `Retry-After` auf 300 s gedeckelt.
 - [ ] Einwilligung (8.2), Schalter einzeln, Standard aus; Klartext-Hinweis; Network-Security-Config nur für diese Funktion (`http` zu den Nutzereingaben).
-- [ ] Nichts aus 5.7; geschützte Inhalte ohne `media` und ohne Kennzeichnung.
+- [ ] Nichts aus 5.7; geschützte Inhalte ohne `media`, ohne `picture` und ohne Kennzeichnung.
+- [ ] `picture` nur mit `share_artwork`, URL aus dem Katalog-Bildfeld, `picture_ok` vor dem Senden (alle `picture_urls`-Fälle) und `picture_has_credentials` mit Benutzername/Passwort (`app_credential_cases`); Sperrliste als CIDR-Tabelle (kein `is_global`); `playlist`/Ereignisse nur mit `share_playlist` (Werte nach 5.3, `payloads`-Fälle); Einwilligungstext nach 8.2.
 - [ ] Geheimnis nicht im Backup; Keystore-Umhüllung geprüft.
 - [ ] Keine Puffer, Backoff nach 5.5, Logs nach 8.5.
 - [ ] (Stufe 3) Nonce (Erneuerung 8 s, Ablauf 10 s), `ack`, Befehlsprüfung genau in der Reihenfolge von 6.3 (strenges Format, `bad_sig` lässt die Nonce stehen); nur im Vordergrund.
@@ -673,6 +747,7 @@ Abhilfe: Optionen der Integration → „Auch Anfragen von außerhalb des Heimne
 - [ ] Sequenzreservierung im lokalen Speicher; Abgleich bei `409`.
 - [ ] Alle Vektoren aus `vectors.json` nachgerechnet (Unit-Tests ohne TV).
 - [ ] Einwilligung, Standard aus, Nichts aus 5.7, Logs nach 8.5.
+- [ ] `picture` und `playlist` wie bei Android (eigene `picture_ok`-Umsetzung mit CIDR-Tabelle und Bit-Vergleich, IPv6-Parser mit `::`-Kurzform, alle Fälle aus `picture_urls` und `app_credential_cases`; `Date`→UTC-Text mit `Z` ohne Millisekunden für `updated`).
 - [ ] Hinweis „Geheimnis nicht verschlüsselt gespeichert“ nicht als Verschlüsselung bewerben.
 - [ ] (Stufe 3) WebSocket mit Anwendungs-Ping/Pong, Nonce, `ack` nach Abschnitt 6.
 
@@ -738,4 +813,4 @@ d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e2
 
 ## Anhang B: Testvektoren
 
-`vectors.json` enthält, jeweils mit Eingaben und Erwartung: `encodings` (gültiges und ungültiges base64url), `primitives` (RFC-4231- und RFC-5869-Fälle, SHA-256), `srp_group`, `pairing` (feste Testwerte `a`, `b`, Salt, Code; alle Zwischenwerte, Nachrichten, falscher Code), `length_prefix`, `srp_bounds` (Randwerte), `names`, `webhook` (28 Fälle, u. a. falscher Content-Type, `ha_state_rev` unbekannt, u. a. doppelter JSON-Schlüssel: gültig, Wiederholung, Lücke, Manipulation, falscher Pfad/Schlüssel/Gerät, Version, Aufbaufehler, Sequenzformen, zu groß, unbekannte Typen), `payloads` (37 Nutzlast-Fälle, auch mit angehängtem LF gültig/ungültig, mit Codepunkt-Grenzen), `websocket` (Handshake, Nonce, 16 Befehlsfälle mit Formatfehlern und `bad_sig` ohne Nonce-Verbrauch, 10 `ack`-Fälle mit strenger Prüfung). Prüfen: `python3 reference.py --check` (nur Standardbibliothek). Neu erzeugen: `python3 reference.py --generate`; geänderte Vektoren erfordern eine Änderung des Protokolls oder einen Fehlerbericht.
+`vectors.json` enthält, jeweils mit Eingaben und Erwartung: `encodings` (gültiges und ungültiges base64url), `primitives` (RFC-4231- und RFC-5869-Fälle, SHA-256), `srp_group`, `pairing` (feste Testwerte `a`, `b`, Salt, Code; alle Zwischenwerte, Nachrichten, falscher Code), `length_prefix`, `srp_bounds` (Randwerte), `names`, `webhook` (28 Fälle, u. a. falscher Content-Type, `ha_state_rev` unbekannt, u. a. doppelter JSON-Schlüssel: gültig, Wiederholung, Lücke, Manipulation, falscher Pfad/Schlüssel/Gerät, Version, Aufbaufehler, Sequenzformen, zu groß, unbekannte Typen), `picture_urls` (Bild-URL gültig/ungültig, von Hand eingetragen), `app_credential_cases`, `strip_unknown`, `payloads` (65 Nutzlast-Fälle, darunter neu `picture_*`, `playlist_*`, `event_playlist_*`, auch mit angehängtem LF gültig/ungültig, mit Codepunkt-Grenzen), `websocket` (Handshake, Nonce, 16 Befehlsfälle mit Formatfehlern und `bad_sig` ohne Nonce-Verbrauch, 10 `ack`-Fälle mit strenger Prüfung). Prüfen: `python3 reference.py --check` (nur Standardbibliothek). Neu erzeugen: `python3 reference.py --generate`; geänderte Vektoren erfordern eine Änderung des Protokolls oder einen Fehlerbericht.

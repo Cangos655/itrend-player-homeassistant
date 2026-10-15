@@ -42,6 +42,30 @@
       },
       "connections_max": {
         "name": "Erlaubte Verbindungen"
+      },
+      "playlist_updated": {
+        "name": "Playlist aktualisiert"
+      },
+      "playlist_live": {
+        "name": "Sender"
+      },
+      "playlist_movies": {
+        "name": "Filme"
+      },
+      "playlist_series": {
+        "name": "Serien"
+      },
+      "playlist_error": {
+        "name": "Playlist-Fehler",
+        "state": {
+          "none": "Kein Fehler",
+          "no_network": "Kein Netzwerk",
+          "unauthorized": "Nicht autorisiert",
+          "server_error": "Serverfehler",
+          "connection_lost": "Verbindung verloren",
+          "storage": "Speicherfehler",
+          "other": "Sonstiger Fehler"
+        }
       }
     },
     "binary_sensor": {

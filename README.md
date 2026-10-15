@@ -47,6 +47,8 @@ Ereignisse auf dem HA-Bus: `itrend_player_event` mit `type` = `playback_started`
 
 Nach etwa **90 Sekunden** ohne Lebenszeichen (drei verpasste Herzschläge) werden die Entitäten „nicht verfügbar“. Das ist von „Fernseher aus“ nicht zu unterscheiden. Beendet die App ordentlich, wechselt der Media-Player sofort auf „aus“.
 
+**Cover und Playlist-Status (ab 0.2.0):** Gibt die App Cover/Senderlogo frei, setzt der Media-Player die gemeldete Bild-Adresse als Entitätsbild. Das Bild lädt Ihr Browser bzw. die Home-Assistant-App direkt von dieser Adresse (Bilderserver des Anbieters sehen dann Ihre Zugriffe); Home Assistant und die Integration laden nichts serverseitig. Die Adresse wird streng geprüft (keine privaten/lokalen Adressen, keine Zugangsdaten, keine Stream-Muster). Mit Freigabe der Playlist zeigen Sensoren „Playlist aktualisiert“, „Sender“, „Filme“, „Serien“ (Diagnose) und „Playlist-Fehler“ den Zustand der geladenen Playlist (nur Zahlen und Fehlerart, keine Adressen oder Namen); dazu die Ereignisse `playlist_refreshed` und `playlist_failed` (mit `error`). Bild-Adressen und Titel stehen nicht im Recorder-Verlauf.
+
 ### Datenschutz und Sicherheit
 
 - Gesendet wird nur, was Sie in der App freigeben (nur Status, Titel und Sender, Abo-Ablauf). Standard ist: nichts. Zugangsdaten, Playlist- und Anbieteradressen werden nie gesendet.
@@ -108,6 +110,8 @@ Without HACS: copy the folder `custom_components/itrend_player` into `config/cus
 Events on the HA bus: `itrend_player_event` with `type` = `playback_started`, `playback_stopped` (`reason`), `channel_changed`, `trailer_opened`, plus `device_id`, `entry_id` and, if shared, `media`.
 
 After about **90 seconds** without a sign of life (three missed heartbeats) entities become "unavailable". This cannot be distinguished from "TV off". If the app quits cleanly, the media player switches to "off" immediately.
+
+**Artwork and playlist status (since 0.2.0):** If the app shares artwork, the media player uses the reported image address as the entity picture. Your browser or the Home Assistant app loads the image directly from that address (the image host will see those requests); Home Assistant and the integration never fetch anything server-side. The address is checked strictly (no private/local addresses, no credentials, no stream patterns). With playlist sharing, the sensors "Playlist updated", "Channels", "Movies", "Series" (diagnostic) and "Playlist error" show the state of the loaded playlist (numbers and error type only, no addresses or names), plus the events `playlist_refreshed` and `playlist_failed` (with `error`). Image addresses and titles are not kept in the recorder history.
 
 ### Privacy and security
 

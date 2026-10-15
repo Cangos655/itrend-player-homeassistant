@@ -121,6 +121,35 @@ def test_strict_json():
     assert p.loads_strict(b'{"a":[1,2]}') == {"a": [1, 2]}
 
 
-def test_clean_media_drops_unknown_fields():
-    assert p.clean_media({"kind": "movie", "title": "x", "url": "http://x"}) == {
-        "kind": "movie", "title": "x"}
+def test_picture_urls_vectors(vectors):
+    cases = vectors["picture_urls"]["cases"]
+    assert len(cases) >= 204
+    for case in cases:
+        assert p.picture_ok(case["url"]) is case["valid"], (case["url"], case.get("why"))
+        assert ref.picture_ok(case["url"]) is case["valid"]
+
+
+def test_strip_unknown_vectors(vectors):
+    for case in vectors["strip_unknown"]["cases"]:
+        assert p.strip_unknown(case["input"]) == case["expect"], case["name"]
+
+
+def test_picture_ok_non_strings():
+    for bad in (None, 5, b"https://a.example.org/x.jpg", ["https://a.org/x"], "", "https://" + "a" * 600 + ".org/"):
+        assert p.picture_ok(bad) is False
+    assert p.picture_ok("https://img.example.org/x.jpg\n") is False
+
+
+def test_ipv6_parser_matches_stdlib_on_samples():
+    import ipaddress
+    samples = ["::", "::1", "1::", "1:2:3:4:5:6:7:8", "1:2:3:4:5:6:7::", "::2:3:4:5:6:7:8", "1::8",
+               "::ffff:1.2.3.4", "::1.2.3.4", "1:2:3:4:5:6:1.2.3.4", "1:2:3:4:5:6:7:1.2.3.4",
+               "1:2:3:4:5:6:7", ":1:2:3:4:5:6:7", "1:2:3:4:5:6:7:", "1::2::3", ":::", "1:::2",
+               "12345::", "g::", "::1.2.3", "::01.2.3.4", "::256.1.1.1", "2001:db8::1", "64:ff9b::1.2.3.4",
+               "1:2:3:4:5:6:7:8:9", "::1:", "1.2.3.4", "2001:DB8::A"]
+    for text in samples:
+        try:
+            expected = int(ipaddress.IPv6Address(text))
+        except ValueError:
+            expected = None
+        assert p._parse_ipv6(text) == expected, text

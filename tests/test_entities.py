@@ -16,7 +16,7 @@ from homeassistant.helpers import (
     issue_registry as ir,
 )
 from homeassistant.util import dt as dt_util
-from pytest_homeassistant_custom_component.common import async_fire_time_changed
+from pytest_homeassistant_custom_component.common import async_capture_events, async_fire_time_changed
 
 from custom_components.itrend_player import (
     async_remove_config_entry_device,
@@ -324,7 +324,7 @@ def test_translations_complete_and_consistent():
 
 def test_manifest():
     m = json.loads((PKG / "manifest.json").read_text(encoding="utf-8"))
-    assert m["domain"] == "itrend_player" and m["version"] == "0.1.2"
+    assert m["domain"] == "itrend_player" and m["version"] == "0.2.0"
     assert m["config_flow"] is True and m["integration_type"] == "device"
     assert m["iot_class"] == "local_push" and m["requirements"] == []
     assert m["dependencies"] == ["webhook", "http"]
@@ -427,3 +427,130 @@ async def test_max_connections_sensor_works_with_max_only(hass, env):
     await send(hass, app, client, 1, dict(HB_SUB, sub={"connections_max": 3}))
     assert hass.states.get(ids["max"]).state == "3"
     assert hass.states.get(ids["conn"]).state == STATE_UNKNOWN
+
+
+# ------------------------------------------------ Cover und Playlist-Status
+PIC = "https://img.example.com/covers/123.jpg"
+PL_HB = {"v": 1, "type": "heartbeat", "app_version": "0.4.0", "platform": "android", "state_rev": 7,
+         "playlist": {"updated": "2026-10-15T08:30:00Z", "live": 1200, "movies": 3400,
+                      "series": 560, "error": "none"}}
+
+
+async def test_picture_becomes_remote_entity_picture_only(hass, env):
+    _e, _d, app, client, ids, _s = env
+    st = dict(EPISODE, picture=PIC)
+    await send(hass, app, client, 1, st)
+    state = hass.states.get(ids["mp"])
+    assert state.attributes["entity_picture"] == PIC  # Client laedt selbst, kein HA-Proxy
+    assert "entity_picture_local" not in state.attributes or state.attributes["entity_picture_local"] is None
+    entity = hass.data["entity_components"]["media_player"].get_entity(ids["mp"])
+    assert entity.media_image_hash is None
+    assert await entity.async_get_media_image() == (None, None)
+    await send(hass, app, client, 2, dict(EPISODE, rev=8))  # ohne picture: weg
+    assert "entity_picture" not in hass.states.get(ids["mp"]).attributes \
+        or not hass.states.get(ids["mp"]).attributes["entity_picture"]
+
+
+async def test_picture_gone_when_idle_or_closed(hass, env):
+    _e, _d, app, client, ids, _s = env
+    await send(hass, app, client, 1, dict(EPISODE, picture=PIC))
+    await send(hass, app, client, 2, {"v": 1, "type": "state", "rev": 8, "status": "idle"})
+    assert not hass.states.get(ids["mp"]).attributes.get("entity_picture")
+
+
+@pytest.mark.parametrize(
+    "bad",
+    ["http://127.0.0.1/a.jpg", "https://u:p@img.example.com/a.jpg", "https://img.example.com/movie/a/b/1.mp4",
+     "https://img.example.com/a.jpg?token=x", "javascript:alert(1)", "https://[::ffff:8.8.8.8]/a.jpg"],
+)
+async def test_bad_picture_is_422(hass, env, bad):
+    _e, device, app, client, ids, _s = env
+    resp = await app.post(client, app.body(1, dict(EPISODE, picture=bad)))
+    assert resp.status == 422
+    assert device.state.picture is None and device.state.available is False
+
+
+async def test_picture_without_media_is_422(env):
+    _e, _d, app, client, _i, _s = env
+    resp = await app.post(client, app.body(1, {"v": 1, "type": "state", "rev": 1, "status": "idle",
+                                               "picture": PIC}))
+    assert resp.status == 422
+
+
+async def test_playlist_sensors(hass, env):
+    _e, _d, app, client, ids, _s = env
+    ents = er.async_get(hass)
+    entry = env[0]
+
+    def eid(key):
+        return ents.async_get_entity_id("sensor", DOMAIN, f"{entry.entry_id}_{key}")
+
+    await send(hass, app, client, 1, PL_HB)
+    assert dt_util.parse_datetime(hass.states.get(eid("playlist_updated")).state) == datetime(
+        2026, 10, 15, 8, 30, tzinfo=dt_util.UTC)
+    assert hass.states.get(eid("playlist_live")).state == "1200"
+    assert hass.states.get(eid("playlist_movies")).state == "3400"
+    assert hass.states.get(eid("playlist_series")).state == "560"
+    assert hass.states.get(eid("playlist_error")).state == "none"
+    for key in ("playlist_live", "playlist_movies", "playlist_series"):
+        assert ents.async_get(eid(key)).entity_category == "diagnostic"
+    await send(hass, app, client, 2, dict(PL_HB, playlist={"error": "unauthorized", "updated": None}))
+    assert hass.states.get(eid("playlist_error")).state == "unauthorized"
+    assert hass.states.get(eid("playlist_updated")).state == STATE_UNKNOWN
+    assert hass.states.get(eid("playlist_live")).state == STATE_UNKNOWN
+    # Ohne Einwilligung (kein playlist-Objekt): Werte leer
+    await send(hass, app, client, 3, {k: v for k, v in PL_HB.items() if k != "playlist"})
+    assert hass.states.get(eid("playlist_error")).state == STATE_UNKNOWN
+
+
+@pytest.mark.parametrize(
+    "playlist",
+    [{"updated": "2026-10-15T08:30:00+00:00"}, {"updated": "2026-10-15 08:30:00Z"},
+     {"updated": "2026-02-30T08:30:00Z"}, {"updated": "2026-10-15T24:00:00Z"},
+     {"updated": "2026-10-15T08:30:60Z"}, {"updated": "2026-10-15T08:30:00.5Z"},
+     {"live": -1}, {"movies": 1000000}, {"series": 1.0}, {"live": True}, {"error": "boom"}, {"error": None},
+     "x", [1]],
+)
+async def test_bad_playlist_is_422(env, playlist):
+    _e, _d, app, client, _i, _s = env
+    resp = await app.post(client, app.body(1, dict(PL_HB, playlist=playlist)))
+    assert resp.status == 422
+
+
+async def test_playlist_events(hass, env):
+    _e, _d, app, client, _i, _s = env
+    events = async_capture_events(hass, "itrend_player_event")
+    await send(hass, app, client, 1, {"v": 1, "type": "event", "name": "playlist_refreshed", "x": 1})
+    await send(hass, app, client, 2, {"v": 1, "type": "event", "name": "playlist_failed",
+                                      "error": "no_network", "url": "http://secret"})
+    await hass.async_block_till_done()
+    assert [e.data["type"] for e in events] == ["playlist_refreshed", "playlist_failed"]
+    assert "error" not in events[0].data and events[1].data["error"] == "no_network"
+    assert "url" not in events[1].data and "x" not in events[0].data
+    for bad in ({"name": "playlist_failed"}, {"name": "playlist_failed", "error": "none"},
+                {"name": "playlist_refreshed", "error": "other"}):
+        resp = await app.post(client, app.body(10 + len(str(bad)), {"v": 1, "type": "event", **bad}))
+        assert resp.status == 422
+
+
+async def test_unknown_fields_and_types_are_dropped(hass, env, caplog):
+    _e, device, app, client, ids, _s = env
+    caplog.set_level("DEBUG")
+    events = async_capture_events(hass, "itrend_player_event")
+    st = dict(EPISODE, picture=PIC, secret_url="http://provider.example/xtream", extra={"a": 1})
+    st["media"] = dict(EPISODE["media"], stream_url="http://provider.example/live/u/p/1.ts")
+    await send(hass, app, client, 1, st)
+    attrs = str(hass.states.get(ids["mp"]).attributes)
+    assert "provider.example" not in attrs
+    assert "provider.example" not in " ".join(r.getMessage() for r in caplog.records
+                                                if r.name.startswith("custom_components"))
+    assert "stream_url" not in device.state.media
+    # unbekannter Typ: 200 ignored, nichts gespeichert, kein Ereignis
+    resp = await app.post(client, app.body(2, {"v": 1, "type": "future", "title": "Geheim"}))
+    data = await resp.json()
+    assert resp.status == 200 and data["ignored"] is True
+    resp = await app.post(client, app.body(3, {"v": 1, "type": "event", "name": "new_thing", "q": 1}))
+    assert (await resp.json())["ignored"] is True
+    await hass.async_block_till_done()
+    assert events == []
+    assert "Geheim" not in caplog.text

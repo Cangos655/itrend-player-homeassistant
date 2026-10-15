@@ -75,6 +75,7 @@ class DeviceState:
     status: str | None = None
     media: dict[str, Any] | None = None
     media_updated_at: datetime | None = None
+    picture: str | None = None
     rev: int | None = None
     app_version: str | None = None
     platform: str | None = None
@@ -82,6 +83,11 @@ class DeviceState:
     sub_expires: date | None = None
     connections_active: int | None = None
     connections_max: int | None = None
+    playlist_updated: datetime | None = None
+    playlist_live: int | None = None
+    playlist_movies: int | None = None
+    playlist_series: int | None = None
+    playlist_error: str | None = None
 
 
 class RateLimiters:
@@ -217,6 +223,7 @@ class ITrendDevice:
             st.app_active = False
             st.status = None
             st.media = None
+            st.picture = None
             self._notify()
 
         self._watchdog = async_call_later(self.hass, AVAILABILITY_TIMEOUT, _fired)
@@ -327,7 +334,10 @@ class ITrendDevice:
         if reason:
             return self._error(422, "bad_payload")
 
-        resync = self._apply(obj)
+        ignored = proto.is_ignored(obj)
+        # Unbekannte Felder verwerfen; unbekannter Typ/Ereignisname: ganz verwerfen (nichts speichern).
+        obj = proto.strip_unknown(obj)
+        resync = self._apply(obj) if obj else False
         body: dict[str, Any] = {
             "ok": True,
             "code": "ok",
@@ -335,7 +345,7 @@ class ITrendDevice:
             "resync": resync,
             "proof": self._proof(seq, sig_s, "ok", 0, resync),
         }
-        if proto.is_ignored(obj):
+        if ignored:
             body["ignored"] = True
         response = json_reply(200, body)
         if obj.get("type") == "unpair":
@@ -355,12 +365,14 @@ class ITrendDevice:
             st.rev = obj["rev"]
             st.status = obj["status"]
             media = obj.get("media")
-            st.media = proto.clean_media(media) if isinstance(media, dict) else None
+            st.media = dict(media) if isinstance(media, dict) else None
+            st.picture = obj.get("picture") if st.media else None
             st.media_updated_at = dt_util.utcnow()
             if st.status == "closed":
                 # Ordentlich beendet: sofort aus, kein Herzschlag mehr erwartet.
                 st.available = True
                 st.app_active = False
+                st.picture = None
                 self._cancel_watchdog()
                 self._notify()
                 return False
@@ -394,6 +406,13 @@ class ITrendDevice:
         st.sub_expires = date.fromisoformat(expires) if isinstance(expires, str) else None
         st.connections_active = sub.get("connections_active")
         st.connections_max = sub.get("connections_max")
+        playlist = obj.get("playlist") or {}
+        updated = playlist.get("updated")
+        st.playlist_updated = proto.parse_utc_datetime(updated) if updated is not None else None
+        st.playlist_live = playlist.get("live")
+        st.playlist_movies = playlist.get("movies")
+        st.playlist_series = playlist.get("series")
+        st.playlist_error = playlist.get("error")
 
     def _fire_event(self, obj: dict[str, Any]) -> None:
         name = obj["name"]
@@ -406,8 +425,10 @@ class ITrendDevice:
         }
         if "reason" in obj:
             data["reason"] = obj["reason"]
+        if "error" in obj:
+            data["error"] = obj["error"]
         if isinstance(obj.get("media"), dict):
-            data["media"] = proto.clean_media(obj["media"])
+            data["media"] = dict(obj["media"])
         self.hass.bus.async_fire(EVENT_ITREND, data)
 
     # ----------------------------------------------------- Reparaturen
@@ -444,6 +465,7 @@ class ITrendDevice:
         st.app_active = False
         st.status = None
         st.media = None
+        st.picture = None
         self.hass.config_entries.async_update_entry(
             self.entry,
             data={**self.entry.data, CONF_K_A2H: "", CONF_K_H2A: "", CONF_UNPAIRED: True},

@@ -17,6 +17,7 @@ from homeassistant.util import dt as dt_util
 
 from . import ITrendConfigEntry
 from .entity import ITrendEntity
+from .protocol import PLAYLIST_ERRORS
 
 
 async def async_setup_entry(
@@ -31,6 +32,11 @@ async def async_setup_entry(
             ITrendSubscriptionSensor(device),
             ITrendConnectionsSensor(device),
             ITrendMaxConnectionsSensor(device),
+            ITrendPlaylistUpdatedSensor(device),
+            ITrendPlaylistCountSensor(device, "live", "playlist_live"),
+            ITrendPlaylistCountSensor(device, "movies", "playlist_movies"),
+            ITrendPlaylistCountSensor(device, "series", "playlist_series"),
+            ITrendPlaylistErrorSensor(device),
         ]
     )
 
@@ -89,3 +95,44 @@ class ITrendMaxConnectionsSensor(ITrendEntity, SensorEntity):
     @property
     def native_value(self) -> int | None:
         return self._device.state.connections_max
+
+
+class ITrendPlaylistUpdatedSensor(ITrendEntity, SensorEntity):
+    _attr_translation_key = "playlist_updated"
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+
+    def __init__(self, device) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(device, "playlist_updated")
+
+    @property
+    def native_value(self) -> datetime | None:
+        return self._device.state.playlist_updated
+
+
+class ITrendPlaylistCountSensor(ITrendEntity, SensorEntity):
+    """Anzahl Sender, Filme oder Serien der geladenen Playlist."""
+
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, device, key: str, field: str) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(device, f"playlist_{key}")
+        self._attr_translation_key = f"playlist_{key}"
+        self._field = field
+
+    @property
+    def native_value(self) -> int | None:
+        return getattr(self._device.state, self._field)
+
+
+class ITrendPlaylistErrorSensor(ITrendEntity, SensorEntity):
+    _attr_translation_key = "playlist_error"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = list(PLAYLIST_ERRORS)
+
+    def __init__(self, device) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(device, "playlist_error")
+
+    @property
+    def native_value(self) -> str | None:
+        return self._device.state.playlist_error

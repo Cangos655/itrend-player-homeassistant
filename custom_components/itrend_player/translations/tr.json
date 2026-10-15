@@ -42,6 +42,30 @@
       },
       "connections_max": {
         "name": "İzin verilen bağlantılar"
+      },
+      "playlist_updated": {
+        "name": "Oynatma listesi güncellendi"
+      },
+      "playlist_live": {
+        "name": "Kanallar"
+      },
+      "playlist_movies": {
+        "name": "Filmler"
+      },
+      "playlist_series": {
+        "name": "Diziler"
+      },
+      "playlist_error": {
+        "name": "Oynatma listesi hatası",
+        "state": {
+          "none": "Hata yok",
+          "no_network": "Ağ yok",
+          "unauthorized": "Yetkisiz",
+          "server_error": "Sunucu hatası",
+          "connection_lost": "Bağlantı koptu",
+          "storage": "Depolama hatası",
+          "other": "Diğer hata"
+        }
       }
     },
     "binary_sensor": {

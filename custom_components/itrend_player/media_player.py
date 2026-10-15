@@ -47,6 +47,9 @@ class ITrendMediaPlayer(ITrendEntity, MediaPlayerEntity):
 
     _attr_name = None
     _attr_supported_features = MediaPlayerEntityFeature(0)
+    # Das Bild laedt der Browser/Client selbst von der gemeldeten URL. HA (und diese
+    # Integration) laedt nie serverseitig: kein lokaler Proxy-Hash, kein Abruf.
+    _attr_media_image_remotely_accessible = True
     # Titel & Co. sollen nicht im Recorder-Verlauf landen (PROTOCOL.md 8.3, 8.4).
     _unrecorded_attributes = frozenset(
         {
@@ -60,6 +63,8 @@ class ITrendMediaPlayer(ITrendEntity, MediaPlayerEntity):
             "media_position",
             "media_position_updated_at",
             "media_kind",
+            "entity_picture",
+            "entity_picture_local",
         }
     )
 
@@ -76,6 +81,17 @@ class ITrendMediaPlayer(ITrendEntity, MediaPlayerEntity):
         if status is None:
             return MediaPlayerState.IDLE
         return _STATE_MAP.get(status, MediaPlayerState.IDLE)
+
+    @property
+    def media_image_url(self) -> str | None:
+        return self._device.state.picture if self._media else None
+
+    @property
+    def media_image_hash(self) -> str | None:
+        return None
+
+    async def async_get_media_image(self) -> tuple[bytes | None, str | None]:
+        return None, None  # nie serverseitig abrufen (SSRF, PROTOCOL.md 8.3a)
 
     @property
     def media_content_type(self) -> str | None:
