@@ -62,6 +62,7 @@ async def env(hass, hass_client_no_auth, hass_storage, vectors):
         "version": eid("sensor", "app_version"),
         "sub": eid("sensor", "subscription_expires"),
         "conn": eid("sensor", "connections"),
+        "max": eid("sensor", "connections_max"),
         "active": eid("binary_sensor", "app_active"),
     }
     assert all(ids.values()), ids
@@ -323,7 +324,7 @@ def test_translations_complete_and_consistent():
 
 def test_manifest():
     m = json.loads((PKG / "manifest.json").read_text(encoding="utf-8"))
-    assert m["domain"] == "itrend_player" and m["version"] == "0.1.1"
+    assert m["domain"] == "itrend_player" and m["version"] == "0.1.2"
     assert m["config_flow"] is True and m["integration_type"] == "device"
     assert m["iot_class"] == "local_push" and m["requirements"] == []
     assert m["dependencies"] == ["webhook", "http"]
@@ -418,3 +419,11 @@ async def _set_remote(hass, entry, value):
     result = await hass.config_entries.options.async_init(entry.entry_id)
     await hass.config_entries.options.async_configure(result["flow_id"], {"allow_remote": value})
     await hass.async_block_till_done()
+
+
+async def test_max_connections_sensor_works_with_max_only(hass, env):
+    _e, _d, app, client, ids, _s = env
+    assert hass.states.get(ids["max"]).state == STATE_UNAVAILABLE
+    await send(hass, app, client, 1, dict(HB_SUB, sub={"connections_max": 3}))
+    assert hass.states.get(ids["max"]).state == "3"
+    assert hass.states.get(ids["conn"]).state == STATE_UNKNOWN

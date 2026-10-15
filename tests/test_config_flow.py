@@ -192,7 +192,7 @@ async def test_reauth_renews_pairing_and_keeps_entities(hass, env, vectors):
                     .async_entries_for_config_entry(
                         __import__("homeassistant.helpers.entity_registry",
                                    fromlist=["x"]).async_get(hass), entry.entry_id)}
-    assert len(old_entities) == 5  # Media-Player, 3 Sensoren, Binaer-Sensor
+    assert len(old_entities) == 6  # Media-Player, 4 Sensoren, Binaer-Sensor
     ir.async_create_issue(hass, DOMAIN, ISSUE_UNPAIRED.format(entry_id=entry.entry_id),
                           is_fixable=False, severity=ir.IssueSeverity.WARNING,
                           translation_key="unpaired_by_app")

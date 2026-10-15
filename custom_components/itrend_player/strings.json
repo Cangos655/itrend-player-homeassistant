@@ -39,6 +39,9 @@
       },
       "connections": {
         "name": "Connections"
+      },
+      "connections_max": {
+        "name": "Allowed connections"
       }
     },
     "binary_sensor": {

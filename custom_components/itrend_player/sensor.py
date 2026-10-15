@@ -30,6 +30,7 @@ async def async_setup_entry(
             ITrendAppVersionSensor(device),
             ITrendSubscriptionSensor(device),
             ITrendConnectionsSensor(device),
+            ITrendMaxConnectionsSensor(device),
         ]
     )
 
@@ -75,3 +76,16 @@ class ITrendConnectionsSensor(ITrendEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         maximum = self._device.state.connections_max
         return None if maximum is None else {"connections_max": maximum}
+
+
+class ITrendMaxConnectionsSensor(ITrendEntity, SensorEntity):
+    """Erlaubte Verbindungen laut Anbieter."""
+
+    _attr_translation_key = "connections_max"
+
+    def __init__(self, device) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(device, "connections_max")
+
+    @property
+    def native_value(self) -> int | None:
+        return self._device.state.connections_max

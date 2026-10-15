@@ -40,6 +40,7 @@ Ohne HACS: den Ordner `custom_components/itrend_player` in das Verzeichnis `conf
 | Sensor App-Version | Diagnose |
 | Sensor Abo-Ablauf | Zeitstempel (Beginn des gemeldeten Tages), nur wenn die App ihn freigibt |
 | Sensor Verbindungen | aktive Verbindungen, Attribut `connections_max` |
+| Sensor Erlaubte Verbindungen | `connections_max` laut Anbieter (kommt auch ohne aktive Verbindungen) |
 | Binär-Sensor App aktiv | an, solange die App sendet |
 
 Ereignisse auf dem HA-Bus: `itrend_player_event` mit `type` = `playback_started`, `playback_stopped` (`reason`), `channel_changed`, `trailer_opened`, dazu `device_id`, `entry_id` und, falls freigegeben, `media`.
@@ -101,6 +102,7 @@ Without HACS: copy the folder `custom_components/itrend_player` into `config/cus
 | App version sensor | diagnostic |
 | Subscription expiry sensor | timestamp (start of the reported day), only if the app shares it |
 | Connections sensor | active connections, attribute `connections_max` |
+| Allowed connections sensor | `connections_max` as reported by the provider (also available without active connections) |
 | App active binary sensor | on while the app is sending |
 
 Events on the HA bus: `itrend_player_event` with `type` = `playback_started`, `playback_stopped` (`reason`), `channel_changed`, `trailer_opened`, plus `device_id`, `entry_id` and, if shared, `media`.

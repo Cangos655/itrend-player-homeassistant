@@ -39,6 +39,9 @@
       },
       "connections": {
         "name": "Bağlantılar"
+      },
+      "connections_max": {
+        "name": "İzin verilen bağlantılar"
       }
     },
     "binary_sensor": {
