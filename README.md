@@ -49,6 +49,8 @@ Nach etwa **90 Sekunden** ohne Lebenszeichen (drei verpasste Herzschläge) werde
 
 **Cover und Playlist-Status (ab 0.2.0):** Gibt die App Cover/Senderlogo frei, setzt der Media-Player die gemeldete Bild-Adresse als Entitätsbild. Das Bild lädt Ihr Browser bzw. die Home-Assistant-App direkt von dieser Adresse (Bilderserver des Anbieters sehen dann Ihre Zugriffe); Home Assistant und die Integration laden nichts serverseitig. Die Adresse wird streng geprüft (keine privaten/lokalen Adressen, keine Zugangsdaten, keine Stream-Muster). Mit Freigabe der Playlist zeigen Sensoren „Playlist aktualisiert“, „Sender“, „Filme“, „Serien“ (Diagnose) und „Playlist-Fehler“ den Zustand der geladenen Playlist (nur Zahlen und Fehlerart, keine Adressen oder Namen); dazu die Ereignisse `playlist_refreshed` und `playlist_failed` (mit `error`). Bild-Adressen und Titel stehen nicht im Recorder-Verlauf.
 
+**Bekannte Einschränkung (Cover):** Liefert der Anbieter seine Bilder nur über `http`, während Home Assistant über `https` läuft, blockiert der Browser die Bilder („Mixed Content“): Cover erscheinen dann nicht, Senderlogos nur, wenn sie über `https` kommen. Das ist unabhängig vom Fernseher und der App. Läuft Home Assistant über `http` oder liefert der Anbieter `https`-Bilder, werden sie angezeigt.
+
 ### Datenschutz und Sicherheit
 
 - Gesendet wird nur, was Sie in der App freigeben (nur Status, Titel und Sender, Abo-Ablauf). Standard ist: nichts. Zugangsdaten, Playlist- und Anbieteradressen werden nie gesendet.
