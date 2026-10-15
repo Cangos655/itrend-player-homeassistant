@@ -631,6 +631,12 @@ Logs (App, Integration, Test-Ausgaben) DÜRFEN NICHT enthalten: Code `P`, `a`, `
 
 ---
 
+### 8.7 Webhook `local_only` und `allow_remote` (Praxisbefund 2026-10-15)
+
+Die Integration registriert den Webhook standardmäßig mit `local_only=True`. Home Assistant beantwortet Anfragen von **nicht-lokalen Absendern** dann mit **HTTP 200 und leerem Body** („Received remote request for local webhook“). Die App sieht dann `unconfirmed (empty_body)`, „App aktiv“ bleibt aus. Das tritt auf, wenn der Fernseher HA über einen Domainnamen erreicht (Hairpin-NAT: Absender erscheint als öffentliche Router-Adresse), über einen Reverse-Proxy oder Duck-DNS/Nabu-Casa-ähnliche Adressen. Die Pairing-Endpunkte sind nicht davon betroffen, deshalb gelingt die Kopplung, die Meldungen aber nicht.
+
+Abhilfe: Optionen der Integration → „Auch Anfragen von außerhalb des Heimnetzes erlauben“ (`allow_remote`, Standard aus; bei an `local_only=False`, der Eintrag wird neu geladen). Die Sicherheit beruht auf der Signatur jeder Meldung (HMAC, Sequenznummer, Raten-Limits); `local_only` ist nur eine zusätzliche Schicht. Die Integration legt eine Reparatur-Meldung an, wenn die Kopplung von einer nicht-privaten Quelladresse kam. Apps zeigen bei leerem 200-Body den Grund `empty_body` und einen Hinweis auf diese Option. Die Integration ab 0.1.1 enthält die Option.
+
 ## 9. Konformität und offene Punkte
 
 ### 9.1 Checkliste Integration (HA)
