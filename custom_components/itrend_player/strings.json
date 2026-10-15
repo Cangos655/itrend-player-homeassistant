@@ -1,0 +1,60 @@
+{
+  "config": {
+    "step": {
+      "pair": {
+        "title": "Pair iTrend Player"
+      },
+      "reauth_confirm": {
+        "title": "Renew pairing",
+        "description": "The pairing with **{name}** has ended or is no longer valid. Continue to show a new code and pair the app again. Existing entities and history are kept."
+      },
+      "retry": {
+        "title": "Pairing did not complete",
+        "description": "Select Submit to show a new code. If a code is locked without you having entered it wrongly, someone on your network may be interfering; create a new code."
+      }
+    },
+    "progress": {
+      "wait_for_app": "Open iTrend Player on your TV, go to Settings > Home Assistant and enter this address and code:\n\n**Address:** {address}\n\n**Code:** **{code}**\n\nThe code is valid for 5 minutes and can only be used once. This window updates by itself as soon as the app has paired."
+    },
+    "error": {
+      "code_expired": "The code expired. Please create a new code.",
+      "code_locked": "Code locked after too many wrong attempts. Please create a new code.",
+      "code_replaced": "Another setup window created a new code. Please create a new code here.",
+      "code_cancelled": "The pairing was cancelled. Please create a new code.",
+      "pairing_blocked": "Several codes were locked in a short time. Pairing is paused for about {minutes} minutes."
+    },
+    "abort": {
+      "already_configured": "This device is already set up.",
+      "reauth_successful": "Pairing renewed.",
+      "setup_failed": "The integration could not be started. Check the log."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "app_version": {
+        "name": "App version"
+      },
+      "subscription_expires": {
+        "name": "Subscription expires"
+      },
+      "connections": {
+        "name": "Connections"
+      }
+    },
+    "binary_sensor": {
+      "app_active": {
+        "name": "App active"
+      }
+    }
+  },
+  "issues": {
+    "unpaired_by_app": {
+      "title": "Device ended the pairing",
+      "description": "{name} ended the pairing from the app. Its key was deleted. Remove the entry, or open it and select Renew pairing to pair the app again."
+    },
+    "key_possibly_copied": {
+      "title": "Pairing key possibly copied",
+      "description": "Messages for {name} arrived with sequence numbers that suggest the same key is used on two devices (for example a restored backup). Remove the entry and pair the TV again."
+    }
+  }
+}

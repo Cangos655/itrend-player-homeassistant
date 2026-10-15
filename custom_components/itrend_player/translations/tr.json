@@ -1,0 +1,60 @@
+{
+  "config": {
+    "step": {
+      "pair": {
+        "title": "iTrend Player eşleştir"
+      },
+      "reauth_confirm": {
+        "title": "Eşleştirmeyi yenile",
+        "description": "**{name}** ile eşleştirme sona erdi veya artık geçerli değil. Yeni bir kod göstermek ve uygulamayı yeniden eşleştirmek için devam edin. Mevcut varlıklar ve geçmiş korunur."
+      },
+      "retry": {
+        "title": "Eşleştirme tamamlanamadı",
+        "description": "Yeni bir kod göstermek için Gönder'i seçin. Kodu yanlış girmediğiniz halde kod kilitlenirse, ağınızda biri müdahale ediyor olabilir; yeni bir kod oluşturun."
+      }
+    },
+    "progress": {
+      "wait_for_app": "TV'nizde iTrend Player'ı açın, Ayarlar > Home Assistant bölümüne gidin ve bu adresi ve kodu girin:\n\n**Adres:** {address}\n\n**Kod:** **{code}**\n\nKod 5 dakika geçerlidir ve yalnızca bir kez kullanılabilir. Uygulama eşleştiği anda bu pencere kendiliğinden güncellenir."
+    },
+    "error": {
+      "code_expired": "Kodun süresi doldu. Lütfen yeni bir kod oluşturun.",
+      "code_locked": "Çok fazla hatalı denemeden sonra kod kilitlendi. Lütfen yeni bir kod oluşturun.",
+      "code_replaced": "Başka bir kurulum penceresi yeni bir kod oluşturdu. Lütfen burada yeni bir kod oluşturun.",
+      "code_cancelled": "Eşleştirme iptal edildi. Lütfen yeni bir kod oluşturun.",
+      "pairing_blocked": "Kısa sürede birkaç kod kilitlendi. Eşleştirme yaklaşık {minutes} dakika duraklatıldı."
+    },
+    "abort": {
+      "already_configured": "Bu cihaz zaten kurulu.",
+      "reauth_successful": "Eşleştirme yenilendi.",
+      "setup_failed": "Entegrasyon başlatılamadı. Günlüğe bakın."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "app_version": {
+        "name": "Uygulama sürümü"
+      },
+      "subscription_expires": {
+        "name": "Abonelik bitişi"
+      },
+      "connections": {
+        "name": "Bağlantılar"
+      }
+    },
+    "binary_sensor": {
+      "app_active": {
+        "name": "Uygulama etkin"
+      }
+    }
+  },
+  "issues": {
+    "unpaired_by_app": {
+      "title": "Cihaz eşleştirmeyi sonlandırdı",
+      "description": "{name} eşleştirmeyi uygulamadan sonlandırdı. Anahtarı silindi. Girişi kaldırın veya açıp Eşleştirmeyi yenile'yi seçerek uygulamayı yeniden eşleştirin."
+    },
+    "key_possibly_copied": {
+      "title": "Eşleştirme anahtarı kopyalanmış olabilir",
+      "description": "{name} için gelen iletilerin sıra numaraları aynı anahtarın iki cihazda kullanıldığını düşündürüyor (örneğin geri yüklenen bir yedek). Girişi kaldırın ve TV'yi yeniden eşleştirin."
+    }
+  }
+}

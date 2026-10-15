@@ -1,0 +1,2 @@
+# Python 3.13 noetig (so verlangt die aktuelle Home-Assistant-Testbibliothek).
+pytest-homeassistant-custom-component

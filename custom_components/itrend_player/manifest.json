@@ -1,0 +1,18 @@
+{
+  "domain": "itrend_player",
+  "name": "iTrend Player",
+  "codeowners": [
+    "@Cangos655"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "webhook",
+    "http"
+  ],
+  "documentation": "https://github.com/Cangos655/itrend-player-homeassistant",
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/Cangos655/itrend-player-homeassistant/issues",
+  "requirements": [],
+  "version": "0.1.0"
+}

@@ -1,0 +1,1551 @@
+{
+  "meta": {
+    "protocol": "itrend-ha v1",
+    "warning": "Nur Testdaten. Alle Werte stammen aus festen Beschriftungen, keine echten Schluessel.",
+    "hash": "SHA-256",
+    "encoding": "base64url ohne Padding",
+    "mac_input": "Alle MAC-Eingaben: lp(feld1, feld2, ...) mit 4 Byte Big-Endian-Laenge je Feld",
+    "generator": "reference.py --generate"
+  },
+  "encodings": {
+    "valid": [
+      {
+        "hex": "",
+        "b64u": ""
+      },
+      {
+        "hex": "00",
+        "b64u": "AA"
+      },
+      {
+        "hex": "0001",
+        "b64u": "AAE"
+      },
+      {
+        "hex": "000102",
+        "b64u": "AAEC"
+      },
+      {
+        "hex": "fffefd",
+        "b64u": "__79"
+      },
+      {
+        "hex": "00010203",
+        "b64u": "AAECAw"
+      }
+    ],
+    "invalid_b64u": [
+      "AA==",
+      "A",
+      "AB",
+      "a+b/",
+      "ab c",
+      "ab\n",
+      "AAA="
+    ],
+    "note": "AB hat nichtkanonische Restbits und ist ungueltig; A hat unmoegliche Laenge."
+  },
+  "length_prefix": {
+    "lp_ab_c_hex": "0000000261620000000163",
+    "lp_a_bc_hex": "0000000161000000026263",
+    "note": "lp(ab,c) und lp(a,bc) muessen sich unterscheiden (keine Feldverwechslung)."
+  },
+  "srp_bounds": {
+    "note": "Gueltig nur 1 < x < N-1 (fuer A und B, auch auf HA-Seite); zusaetzlich u = 0 abbrechen.",
+    "cases": [
+      {
+        "name": "zero",
+        "value_hex": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "valid": false
+      },
+      {
+        "name": "one",
+        "value_hex": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001",
+        "valid": false
+      },
+      {
+        "name": "two",
+        "value_hex": "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002",
+        "valid": true
+      },
+      {
+        "name": "N_minus_2",
+        "value_hex": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a93ad2cafffffffffffffffd",
+        "valid": true
+      },
+      {
+        "name": "N_minus_1",
+        "value_hex": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a93ad2cafffffffffffffffe",
+        "valid": false
+      },
+      {
+        "name": "N",
+        "value_hex": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a93ad2caffffffffffffffff",
+        "valid": false
+      },
+      {
+        "name": "N_plus_1",
+        "value_hex": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a93ad2cb0000000000000000",
+        "valid": false
+      },
+      {
+        "name": "N_plus_2",
+        "value_hex": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a93ad2cb0000000000000001",
+        "valid": false
+      },
+      {
+        "name": "max_384_bytes",
+        "value_hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "valid": false
+      }
+    ]
+  },
+  "names": {
+    "note": "name: keine Normalisierung, UTF-8, 1-40 Codepunkte, hoechstens 160 Byte, keine Steuerzeichen.",
+    "cases": [
+      {
+        "name": "simple",
+        "value": "Wohnzimmer TV",
+        "valid": true
+      },
+      {
+        "name": "empty",
+        "value": "",
+        "valid": false
+      },
+      {
+        "name": "len40",
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "valid": true
+      },
+      {
+        "name": "len41",
+        "value": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "valid": false
+      },
+      {
+        "name": "control",
+        "value": "a\tb",
+        "valid": false
+      },
+      {
+        "name": "emoji40",
+        "value": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+        "valid": true
+      },
+      {
+        "name": "nfd_kept",
+        "value": "Amélie",
+        "valid": true
+      }
+    ]
+  },
+  "primitives": {
+    "hmac_sha256_rfc4231_tc1": {
+      "key_hex": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+      "data_utf8": "Hi There",
+      "mac_hex": "b0344c61d8db38535ca8afceaf0bf12b881dc200c9833da726e9376c2e32cff7"
+    },
+    "hkdf_sha256_rfc5869_tc1": {
+      "ikm_hex": "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b",
+      "salt_hex": "000102030405060708090a0b0c",
+      "info_hex": "f0f1f2f3f4f5f6f7f8f9",
+      "length": 42,
+      "okm_hex": "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865"
+    },
+    "sha256_abc_hex": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+  },
+  "srp_group": {
+    "description": "RFC 3526 Gruppe 15 (3072 Bit, sichere Primzahl), g = 2, wie in RFC 3526 veroeffentlicht",
+    "N_hex": "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca18217c32905e462e36ce3be39e772c180e86039b2783a2ec07a28fb5c55df06f4c52c9de2bcbf6955817183995497cea956ae515d2261898fa051015728e5a8aaac42dad33170d04507a33a85521abdf1cba64ecfb850458dbef0a8aea71575d060c7db3970f85a6e1e4c7abf5ae8cdb0933d71e8c94e04a25619dcee3d2261ad2ee6bf12ffa06d98a0864d87602733ec86a64521f2b18177b200cbbe117577a615d6c770988c0bad946e208e24fa074e5ab3143db5bfce0fd108e4b82d120a93ad2caffffffffffffffff",
+    "g": 2,
+    "N_bytes": 384,
+    "k_hex": "ed33d605409057fa640db4b9374f05c009d8fba35a9f00499af58cb9b8255437",
+    "identity": "itrend-ha-pair-v1"
+  },
+  "pairing": {
+    "note": "a und b sind feste Testwerte (256 Bit); in der Praxis zufaellig je Versuch.",
+    "inputs": {
+      "code": "123456",
+      "salt_hex": "f72cf0043810f32096b9893907e5602a",
+      "a_hex": "b46abf3c7001dd3e6e9c67e7c34ca7f0e123071ebc760fd323f073d198f8d250",
+      "b_hex": "85b364ce85e90a8dd199de80b2c72f1267b9f4e83195734db516e883c22c4952",
+      "session_b64u": "msOite1WGUfBRsYboldu0w",
+      "device_id": "hCLp1pma0XuV762nfdDkMg",
+      "webhook_id": "_0VCV6kfAAgu6M6uRU38tOc2oCO9JEzIUM1OGTSFJvA",
+      "name": "Wohnzimmer TV",
+      "platform": "tizen",
+      "app_version": "0.3.0"
+    },
+    "derived": {
+      "x_hex": "ae09849ade3dc2bc7471346b1351da113f5631158ddfc952eb71aa5d1d686d79",
+      "verifier_v_hex": "6af0127e36cc78c8974a760bee80324e3eb06f775cff2470bfe3814be83d755f1a2ba781b81fbf46a4857cd5b8c97c32fcde06fbe363c84eeff8d5e3987b9e302857e08ffaff20f95ed6e9b1b98f2b0012df1dda9680d11a23b08fdac112b9e3125e1301c573257ab711de5312445f937308455523674801975b3766f0a303b077961f3bc137df7b9c52aa12587c43ede5b0d0f7e24162b1b8b6f63dafbb7718376ffbfb9a027fdefdf06504f133af0828cc376151cca45206e6e25b2bc2a8ccc9a9ecf3357e492ab30857d6d9a89a1280698c10fcc21e942c76119557fcf15742d1e985696c3bcc00a84b64e13c1c5ba401ecbf19fa1c73ee8498d001914edd45fb46137302618bc3ddcabeb3533abb163ab9e504023c0a406ded5f44100d018b556a9fecad34122ace9e6a04e3c3957ba43aabcab7fc72c5a61ca2ccca5855ec22f36d8842bcc1fc9f631033fcd28fab33c6e50f2bae4098a737cba511c8b41cfb3329a1a14d9c36b5824ef68914b9c57989252695d928c24f5e2f4dea2bd9",
+      "A_hex": "d22ecb68ee99a165e57b26a51ec1368970a4f7a22356ce67d020d49788ca52af5e79a8af560e619405d75432a4d755dc7d3d8e414f4631fbfcceb94a8858cc88e0212d5219617494adf71a4fddda522abedcbd5dd5bc6128330df98296b65cab398679270007a76b824a81ead5ee1d9d9a429ff6bc3696fe4ae2b16451dd09e5f55ffdf38e693a92e736a1e3d0ce3ea81edf0ca8766f5f8a405c22167010b9eff3c19882e3894575a7803fc9376c4832f9d3e96b0e378e61ad2550e2ec36eea86fd589cc6e4eefeaaab73455e50fb851bb0d1358fb31cc212b438b9550cbef15268e9af921cd2cc6528d22d63cb2f216784507318d8be22e300cfd754566bbcdcfeebe60e017974c87c05ad830cfb22256ca673e676a39af286727cf0d46953c55381e097e24738c59877a115243b580e14fa9d52b1046614f9502c56eb35ab5222616d4ad3659eeec0ba9e9366c56f8135c60cf6401530391a9bdda689e48e7f2af899ce5bd56565702b86360f389536a1edad738434e09e22eaf9415d99fa3",
+      "B_hex": "77573092e6c81866c1cb0e683c864ce077f236243bab59ac4948f23731e11f5ad6a9b3695b055ec6ee465d1a2a12368f98a170aaeb6e2b05918b1123d79f888f7728cd36fe795b16c553689cdf67a6f200d597b4f607b86e9d2a8e92e130c0a2c821f18cc6d5e3f7f151e18ea2937c543a4c72e8dab04d924913fe061187c29aac1fb95492e3e322d0e6682e80eee648fe2527f6c025030789e37cf4144be3939bd473039c50c7de10b23fe4a2cf9946dca6b6b0ab7f882c0eb54730b2be796f4b4c2ab3fefdec9900fb1179cd1d75e6974d0e3e44370da7f943324148ea62ab5205208ae16924b04346a2253dea14f8e1cbb8dfae50c721231a4b59487badfe8f1dd44f19369b84e39bbd0808d58748aec50372ada2d59909a83439920dd0369ef54e728a9ae7033b4e8719865c402f28a1bed77ab80a4cb0cb4f899015f25f9010578f7357337a8be4a2fe20bdc50f46935e96e7b45e9234e1f10bdb06b25ed8f26088d7e35acd407da483708b442357e4091436ba5acd7cbcd7746edaa2ca",
+      "u_hex": "6040bb9012f0f00c076ebbfee9a01e885fcfaa8340478b58a6e62583ce34fce5",
+      "S_hex": "694de6a83376b3364133624a1651ea817e2175d0cc580380a9c14d4a60249442048f5660eeef81d620ea3ed87e744bf51950ed24cb7d2687246e6509d13051698b980e8c398305c169c76ecb3b037f357f710ef941379ec36d57687ba7e7fb97975cd9e9283831ee5136b2c5d91c8055456c399f517c0c76ecb9d6e15d544d27988903344581ccf56d08bff39d4532c86fc8faddad0bec4003943fa42566df96dccaae24d4c5f28265763ac4ba60024fdfe006199423a9579b1da456fafd05791e235a8e3bb493c7805f2f434f8d06d2b2f49ffe01a991495eb1b7e786d3ef61d3e4fdfa380761f85fa05c316f70272d2ea0eb78ac4d3019597d65bc50de3443c6da0ff35ef2987421754e895ca13959b704c41087b860bcb68097b2a4e57fbe7cc059099ab31dc6364c17ffbde7360450e298e12d796ca6a1338f600162a4464c985a0aad0f0e081d95ec8b30935c7d2ab3dcbd8d32d660379554f153ed6f728b40e5e0c4aadce56fa732748f9a7d95df1225046304c384b6fd2c096a8d03d8",
+      "K_srp_hex": "0a543aac811beb010c2a7298330107414dbd7c87aae164a3478591e8d2ff57d6",
+      "K_proof_hex": "179a85355996c12c1637a0b742b03e1fab38f41b278bf4653fc5ef4f126a8d66",
+      "ctx_utf8_hex": "0000000d576f686e7a696d6d65722054560000000574697a656e00000005302e332e30",
+      "transcript_hash_hex": "5e29c212960057c299c57b3e5dbc190cbcba0f16efdcf807fc8a85e13b34e526",
+      "PRK_hex": "3957a24d20007e7adf42194d1461353f85d51be1ee914f844949aec876c3f5cb",
+      "K_a2h_hex": "419856e61e23c89351b81186f83f8b37ee411b791cc51b278ffad79346be6c5f",
+      "K_h2a_hex": "dd7d0aa3b0785dbf1636b95fc93e19e790b4fc5daacf22702de82c8924f2cec4",
+      "M1_hex": "ae6a5b9d867393a68ae4c095526a1630b880e9d9eba1023313fda975531e9b43",
+      "M2_hex": "6b7ab034c2c95af6d0a38f4ac911d90344bdd22f0b0f7533260982c5b05d315f"
+    },
+    "messages": {
+      "start_request": {
+        "v": 1
+      },
+      "start_response": {
+        "v": 1,
+        "session": "msOite1WGUfBRsYboldu0w",
+        "salt": "9yzwBDgQ8yCWuYk5B-VgKg",
+        "B": "d1cwkubIGGbByw5oPIZM4HfyNiQ7q1msSUjyNzHhH1rWqbNpWwVexu5GXRoqEjaPmKFwqutuKwWRixEj15-Ij3cozTb-eVsWxVNonN9npvIA1Ze09ge4bp0qjpLhMMCiyCHxjMbV4_fxUeGOopN8VDpMcujasE2SSRP-BhGHwpqsH7lUkuPjItDmaC6A7uZI_iUn9sAlAweJ43z0FEvjk5vUcwOcUMfeELI_5KLPmUbcprawq3-ILA61RzCyvnlvS0wqs_797JkA-xF5zR115pdNDj5ENw2n-UMyQUjqYqtSBSCK4WkksENGoiU96hT44cu4365QxyEjGktZSHut_o8d1E8ZNpuE45u9CAjVh0iuxQNyraLVmQmoNDmSDdA2nvVOcoqa5wM7TocZhlxALyihvtd6uApMsMtPiZAV8l-QEFePc1czeovkov4gvcUPRpNelue0XpI04fEL2wayXtjyYIjX41rNQH2kg3CLRCNX5AkUNrpazXy813Ru2qLK"
+      },
+      "finish_request": {
+        "v": 1,
+        "session": "msOite1WGUfBRsYboldu0w",
+        "A": "0i7LaO6ZoWXleyalHsE2iXCk96IjVs5n0CDUl4jKUq9eeaivVg5hlAXXVDKk11XcfT2OQU9GMfv8zrlKiFjMiOAhLVIZYXSUrfcaT93aUiq-3L1d1bxhKDMN-YKWtlyrOYZ5JwAHp2uCSoHq1e4dnZpCn_a8Npb-SuKxZFHdCeX1X_3zjmk6kuc2oePQzj6oHt8MqHZvX4pAXCIWcBC57_PBmILjiUV1p4A_yTdsSDL50-lrDjeOYa0lUOLsNu6ob9WJzG5O7-qqtzRV5Q-4UbsNE1j7McwhK0OLlVDL7xUmjpr5Ic0sxlKNItY8svIWeEUHMY2L4i4wDP11RWa7zc_uvmDgF5dMh8Ba2DDPsiJWymc-Z2o5ryhnJ88NRpU8VTgeCX4kc4xZh3oRUkO1gOFPqdUrEEZhT5UCxW6zWrUiJhbUrTZZ7uwLqek2bFb4E1xgz2QBUwORqb3aaJ5I5_KviZzlvVZWVwK4Y2DziVNqHtrXOENOCeIur5QV2Z-j",
+        "M1": "rmpbnYZzk6aK5MCVUmoWMLiA6dnroQIzE_2pdVMem0M",
+        "name": "Wohnzimmer TV",
+        "platform": "tizen",
+        "app_version": "0.3.0"
+      },
+      "finish_response": {
+        "v": 1,
+        "M2": "a3qwNMLJWvbQo49KyRHZA0S90i8LD3UzJgmCxbBdMV8",
+        "device_id": "hCLp1pma0XuV762nfdDkMg",
+        "webhook_id": "_0VCV6kfAAgu6M6uRU38tOc2oCO9JEzIUM1OGTSFJvA"
+      }
+    },
+    "wrong_code": {
+      "code": "654321",
+      "M1_hex": "9a8c5bf2cc5d0616e129a5925c95fbfb0a11f8c7724a87c8fd0ddbf949a4e229",
+      "expect": "HA lehnt ab (403 pairing_failed), M1 stimmt nicht mit dem erwarteten Wert ueberein"
+    },
+    "lengths": {
+      "g": 2,
+      "A_b64u_chars": 512,
+      "B_b64u_chars": 512,
+      "M_b64u_chars": 43,
+      "salt_b64u_chars": 22,
+      "device_id_chars": 22,
+      "webhook_id_chars": 43
+    }
+  },
+  "webhook": {
+    "device_id": "hCLp1pma0XuV762nfdDkMg",
+    "webhook_id": "_0VCV6kfAAgu6M6uRU38tOc2oCO9JEzIUM1OGTSFJvA",
+    "path": "/api/webhook/_0VCV6kfAAgu6M6uRU38tOc2oCO9JEzIUM1OGTSFJvA",
+    "K_a2h_hex": "419856e61e23c89351b81186f83f8b37ee411b791cc51b278ffad79346be6c5f",
+    "K_h2a_hex": "dd7d0aa3b0785dbf1636b95fc93e19e790b4fc5daacf22702de82c8924f2cec4",
+    "canonical_form": "lp(ITP1-REQ, POST, PATH, DEVICE_ID, SEQ-Dezimaltext, PAYLOAD-Rohbytes); lp = 4 Byte Big-Endian-Laenge + Feld je Feld",
+    "cases": [
+      {
+        "name": "state_episode",
+        "description": "Gueltiger state mit Serie",
+        "last_seq_before": 41,
+        "ha_state_rev_before": 6,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n42\np_hAB0Rvh4vxHSMnWrRIaQUTFSpN0PVT41Ypd7FIUzU\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "1GL94ioXETd0g1wPM6vlZ3KxxfnsW_26hDThPb0Ihto"
+        },
+        "last_seq_after": 42,
+        "signing_input_hex": "00000008495450312d52455100000004504f5354000000382f6170692f776562686f6f6b2f5f30564356366b6641416775364d367552553338744f63326f434f394a457a49554d314f475453464a76410000001668434c7031706d61305875563736326e6664446b4d67000000023432000000b77b2276223a312c2274797065223a227374617465222c22726576223a372c22737461747573223a22706c6179696e67222c226d65646961223a7b226b696e64223a22657069736f6465222c227469746c65223a2250696c6f74222c22736572696573223a22426569737069656c7365726965222c22736561736f6e223a312c22657069736f6465223a322c226475726174696f6e5f6d73223a323730303030302c22706f736974696f6e5f6d73223a3132353030307d7d"
+      },
+      {
+        "name": "heartbeat_in_sync",
+        "description": "heartbeat mit passender state_rev",
+        "last_seq_before": 42,
+        "ha_state_rev_before": 7,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n43\nJHcuXNEwK5s5cDaAa4Ad9dloFUMj7N52HU-uoV2mncs\n{\"v\":1,\"type\":\"heartbeat\",\"app_version\":\"0.3.0\",\"platform\":\"tizen\",\"state_rev\":7,\"ws\":false,\"sub\":{\"expires\":\"2027-03-31\",\"connections_active\":1,\"connections_max\":2}}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "He0FJeylAFBl84_mP-ivGaiT9mwFlecYrRJW2ja89u0"
+        },
+        "last_seq_after": 43
+      },
+      {
+        "name": "heartbeat_resync",
+        "description": "state_rev passt nicht: HA verlangt neuen state",
+        "last_seq_before": 42,
+        "ha_state_rev_before": 3,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n43\nJHcuXNEwK5s5cDaAa4Ad9dloFUMj7N52HU-uoV2mncs\n{\"v\":1,\"type\":\"heartbeat\",\"app_version\":\"0.3.0\",\"platform\":\"tizen\",\"state_rev\":7,\"ws\":false,\"sub\":{\"expires\":\"2027-03-31\",\"connections_active\":1,\"connections_max\":2}}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": true,
+          "proof": "WXMbGEKgB6A8vmmgkmNNWps9D21yYsIZXKiGX8Nlefc"
+        },
+        "last_seq_after": 43
+      },
+      {
+        "name": "event_channel",
+        "description": "Gueltiges Ereignis",
+        "last_seq_before": 43,
+        "ha_state_rev_before": 7,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n44\nhI53vGRkapImcSKncd8uRadhTdnAnTZfQjd82tPgscM\n{\"v\":1,\"type\":\"event\",\"name\":\"channel_changed\",\"media\":{\"kind\":\"live\",\"channel\":\"Beispielsender 1\"}}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "3NP5jDC6nNZafHja34oWynzfUgDEkphWGkDfodqiHaY"
+        },
+        "last_seq_after": 44
+      },
+      {
+        "name": "unicode_title",
+        "description": "Umlaute, Gedankenstrich, Emoji (UTF-8, Signatur ueber Rohbytes)",
+        "last_seq_before": 44,
+        "ha_state_rev_before": 7,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n45\n9xQn19BwN9L7d-SYCiRIrrp4gPanzqbNpGNMO0k4YqE\n{\"v\":1,\"type\":\"state\",\"rev\":9,\"status\":\"paused\",\"media\":{\"kind\":\"movie\",\"title\":\"Größe – Ärger 😀\"}}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "tgcX-dK_JmLFutfsvPJeZyne_MYfKNGIy8axEHq5_HU"
+        },
+        "last_seq_after": 45,
+        "signing_input_hex": "00000008495450312d52455100000004504f5354000000382f6170692f776562686f6f6b2f5f30564356366b6641416775364d367552553338744f63326f434f394a457a49554d314f475453464a76410000001668434c7031706d61305875563736326e6664446b4d670000000234350000006b7b2276223a312c2274797065223a227374617465222c22726576223a392c22737461747573223a22706175736564222c226d65646961223a7b226b696e64223a226d6f766965222c227469746c65223a224772c3b6c39f6520e2809320c3847267657220f09f9880227d7d"
+      },
+      {
+        "name": "idle_state",
+        "description": "state ohne media",
+        "last_seq_before": 45,
+        "ha_state_rev_before": 7,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n46\nK97S7-vsuYMWDU-D57C5RCNYcaP9iTZL0i5wIwm-WMM\n{\"v\":1,\"type\":\"state\",\"rev\":8,\"status\":\"idle\"}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "Q63zvyhwS_HPwndvt-o1LQ6eaJOJ4aA1t7VoXTbZ0hA"
+        },
+        "last_seq_after": 46
+      },
+      {
+        "name": "gap_ok",
+        "description": "Luecke in der Sequenz ist erlaubt",
+        "last_seq_before": 46,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n150\nu9hoOE8i2p5Drb96zKjbV4u28pa0QNKjSZla-mHS2Vg\n{\"v\":1,\"type\":\"state\",\"rev\":8,\"status\":\"idle\"}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "PAh9cXdI48IYVsaydByZEBRMD6hs_6nfPmqq38vhkO4"
+        },
+        "last_seq_after": 150
+      },
+      {
+        "name": "unpair",
+        "description": "Trennen durch die App",
+        "last_seq_before": 150,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n151\n5MoaAJIIo_6UWZL7fs0m-jZiAaTwRKFgSPXYTPtsTZM\n{\"v\":1,\"type\":\"unpair\"}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "4LJaRslpeBXkbQHc2XDNQ2U_HbvPa2p9UoqijYOyL_g"
+        },
+        "last_seq_after": 151
+      },
+      {
+        "name": "unknown_event_ignored",
+        "description": "Unbekanntes Ereignis wird angenommen und ignoriert",
+        "last_seq_before": 46,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n47\n9KvgHYdRQIhQuWmJAnV15ZDQvtqytKE6KweIsKEUKuw\n{\"v\":1,\"type\":\"event\",\"name\":\"something_new\"}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "ignored": true,
+          "proof": "CKlMR5hgMdLg6maKHQbxQoxWim2MzoBZMUxvtGsRSfc"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "unknown_field_ignored",
+        "description": "Unbekanntes Feld wird ignoriert",
+        "last_seq_before": 46,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n47\nO1-EMz7ldwySwAymkzljarzThMYlSBl46yZfORjyaGM\n{\"v\":1,\"type\":\"state\",\"rev\":8,\"status\":\"idle\",\"future_field\":true}",
+        "expect": {
+          "http": 200,
+          "code": "ok",
+          "resync": false,
+          "proof": "Xf9qeDOx5sZ2wyLptD8SG37MDnPKkSd41_tKq8G9sBA"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "replay_same_seq",
+        "description": "Gleiche Sequenz erneut",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n47\nfbyRt14toaJIVMKShhMEtryd24jnZjghCH8m8S6HMrQ\n{\"v\":1,\"type\":\"state\",\"rev\":8,\"status\":\"idle\"}",
+        "expect": {
+          "http": 409,
+          "code": "seq_too_low",
+          "last_seq": 47,
+          "proof": "GObopdX7FJ3t71D73aD3OJNpolKoCXvDuACDV1b-oCM"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "replay_old_seq",
+        "description": "Alte Sequenz",
+        "last_seq_before": 100,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n47\nfbyRt14toaJIVMKShhMEtryd24jnZjghCH8m8S6HMrQ\n{\"v\":1,\"type\":\"state\",\"rev\":8,\"status\":\"idle\"}",
+        "expect": {
+          "http": 409,
+          "code": "seq_too_low",
+          "last_seq": 100,
+          "proof": "N_FuvZikoGHAy8CpX3nl-rkP1qRTnw9DhDzOLtSXXe4"
+        },
+        "last_seq_after": 100
+      },
+      {
+        "name": "tampered_payload",
+        "description": "Nutzlast nach dem Signieren veraendert",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\ndi9dpBh2y_tvTjDnzwPdD_rkWgxw3CX_fyQiBd_iLk8\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilat\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 401,
+          "code": "bad_signature"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "wrong_path",
+        "description": "Fuer anderen Webhook signiert",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\ncLzd2c4vwsQ4ANquzjw-6YtxQM4p1Wmep1kH3CNtf9Y\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 401,
+          "code": "bad_signature"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "wrong_key",
+        "description": "Mit fremdem Schluessel signiert",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\nyNQZbTgza_dEhwP-vEH7z9rhBUh42t9oY30SjwH2CrI\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 401,
+          "code": "bad_signature"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "wrong_device",
+        "description": "Fremde device_id im Body",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\n2adMsaoQVaWfPyxRph2foQ\n48\nu5kQt4av4QGdtLGYbGzsXOsNHc4JYpcqNpOrbqiw4p0\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 401,
+          "code": "bad_signature"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "version_2",
+        "description": "Unbekannte Hauptversion",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/2\nhCLp1pma0XuV762nfdDkMg\n48\ndi9dpBh2y_tvTjDnzwPdD_rkWgxw3CX_fyQiBd_iLk8\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 400,
+          "code": "unsupported_version"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "too_few_lines",
+        "description": "Zu wenige Zeilen",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nabc\n",
+        "expect": {
+          "http": 400,
+          "code": "bad_request"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "seq_leading_zero",
+        "description": "Sequenz mit fuehrender Null",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n048\ndi9dpBh2y_tvTjDnzwPdD_rkWgxw3CX_fyQiBd_iLk8\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 400,
+          "code": "bad_request"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "seq_zero",
+        "description": "Sequenz 0",
+        "last_seq_before": 0,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n0\ntFt_9nIk0QBcYZEc8-NgQ4-HCWxausFNVj_TU88h_0A\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 400,
+          "code": "bad_request"
+        },
+        "last_seq_after": 0
+      },
+      {
+        "name": "sig_not_b64u",
+        "description": "Signatur mit Padding",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\ndi9dpBh2y_tvTjDnzwPdD_rkWgxw3CX_fyQiBd_iLk8=\n{\"v\":1,\"type\":\"state\",\"rev\":7,\"status\":\"playing\",\"media\":{\"kind\":\"episode\",\"title\":\"Pilot\",\"series\":\"Beispielserie\",\"season\":1,\"episode\":2,\"duration_ms\":2700000,\"position_ms\":125000}}",
+        "expect": {
+          "http": 400,
+          "code": "bad_request"
+        },
+        "last_seq_after": 47
+      },
+      {
+        "name": "bad_payload_consumes_seq",
+        "description": "Gueltige Signatur, Titel zu lang: 422, Sequenz verbraucht",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\n15By0Q3DixnZcQyswZ-G05A1cUV7QaioT6ZCrLSP1xM\n{\"v\":1,\"type\":\"state\",\"rev\":10,\"status\":\"playing\",\"media\":{\"kind\":\"movie\",\"title\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}}",
+        "expect": {
+          "http": 422,
+          "code": "bad_payload"
+        },
+        "last_seq_after": 48
+      },
+      {
+        "name": "not_json",
+        "description": "Gueltige Signatur, kein JSON: 422",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\nPZTV8Tx8LH01alWVAyvCkrJ2rykADOjTFmv226hjIpg\nnot json",
+        "expect": {
+          "http": 422,
+          "code": "bad_payload"
+        },
+        "last_seq_after": 48
+      },
+      {
+        "name": "duplicate_json_key",
+        "description": "Doppelter JSON-Schluessel: 422",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nhCLp1pma0XuV762nfdDkMg\n48\ncUI-2I6-zr0rRntbIo2dMWzIhOkHglrwZ7Q2vio1A_U\n{\"v\":1,\"type\":\"heartbeat\",\"app_version\":\"0.3.0\",\"platform\":\"tizen\",\"state_rev\":1,\"state_rev\":2}",
+        "expect": {
+          "http": 422,
+          "code": "bad_payload"
+        },
+        "last_seq_after": 48
+      },
+      {
+        "name": "too_large",
+        "description": "Body ueber 4096 Byte",
+        "last_seq_before": 47,
+        "ha_state_rev_before": 8,
+        "body": "ITP/1\nxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "expect": {
+          "http": 413,
+          "code": "payload_too_large"
+        },
+        "last_seq_after": 47
+      }
+    ]
+  },
+  "payloads": {
+    "note": "expect null = gueltig; sonst Grundcode (bei HA: bad_payload bzw. unsupported_version).",
+    "cases": [
+      {
+        "name": "state_ok",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 7,
+          "status": "playing",
+          "media": {
+            "kind": "episode",
+            "title": "Pilot",
+            "series": "Beispielserie",
+            "season": 1,
+            "episode": 2,
+            "duration_ms": 2700000,
+            "position_ms": 125000
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "state_idle_ok",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 8,
+          "status": "idle"
+        },
+        "expect": null
+      },
+      {
+        "name": "state_live_ok",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "live",
+            "channel": "Beispielsender 1",
+            "title": "Nachrichten"
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "title_120_emoji_ok",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "movie",
+            "title": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "title_121_emoji_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "movie",
+            "title": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+          }
+        },
+        "expect": "media_title"
+      },
+      {
+        "name": "title_empty_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "movie",
+            "title": ""
+          }
+        },
+        "expect": "media_title"
+      },
+      {
+        "name": "title_control_char_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "movie",
+            "title": "a\nb"
+          }
+        },
+        "expect": "media_title"
+      },
+      {
+        "name": "status_unknown_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "running"
+        },
+        "expect": "status"
+      },
+      {
+        "name": "rev_negative_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": -1,
+          "status": "playing"
+        },
+        "expect": "rev"
+      },
+      {
+        "name": "rev_float_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1.0,
+          "status": "playing"
+        },
+        "expect": "rev"
+      },
+      {
+        "name": "rev_bool_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": true,
+          "status": "playing"
+        },
+        "expect": "rev"
+      },
+      {
+        "name": "season_negative_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "episode",
+            "season": -1
+          }
+        },
+        "expect": "media_season"
+      },
+      {
+        "name": "episode_fields_on_movie_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "movie",
+            "season": 1
+          }
+        },
+        "expect": "media_episode_fields_only_for_episode"
+      },
+      {
+        "name": "channel_on_movie_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "movie",
+            "channel": "X"
+          }
+        },
+        "expect": "media_channel_only_for_live"
+      },
+      {
+        "name": "live_with_position_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "live",
+            "position_ms": 5
+          }
+        },
+        "expect": "media_no_position_for_live"
+      },
+      {
+        "name": "position_after_end_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "movie",
+            "duration_ms": 1000,
+            "position_ms": 2000
+          }
+        },
+        "expect": "media_position_after_end"
+      },
+      {
+        "name": "duration_over_48h_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "movie",
+            "duration_ms": 172800001
+          }
+        },
+        "expect": "media_duration_ms"
+      },
+      {
+        "name": "media_in_idle_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 8,
+          "status": "idle",
+          "media": {
+            "kind": "movie"
+          }
+        },
+        "expect": "media_not_allowed_in_status"
+      },
+      {
+        "name": "kind_unknown_bad",
+        "payload": {
+          "v": 1,
+          "type": "state",
+          "rev": 1,
+          "status": "playing",
+          "media": {
+            "kind": "adult"
+          }
+        },
+        "expect": "media_kind"
+      },
+      {
+        "name": "version_2",
+        "payload": {
+          "v": 2,
+          "type": "state",
+          "rev": 8,
+          "status": "idle"
+        },
+        "expect": "unsupported_version"
+      },
+      {
+        "name": "heartbeat_ok",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "heartbeat_minimal_ok",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "android",
+          "state_rev": 0
+        },
+        "expect": null
+      },
+      {
+        "name": "heartbeat_version_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "v0.3",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          }
+        },
+        "expect": "app_version"
+      },
+      {
+        "name": "heartbeat_platform_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "webos",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-03-31",
+            "connections_active": 1,
+            "connections_max": 2
+          }
+        },
+        "expect": "platform"
+      },
+      {
+        "name": "heartbeat_expires_bad_date",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": "2027-02-30"
+          }
+        },
+        "expect": "sub_expires"
+      },
+      {
+        "name": "heartbeat_expires_null_ok",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "expires": null
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "heartbeat_connections_bad",
+        "payload": {
+          "v": 1,
+          "type": "heartbeat",
+          "app_version": "0.3.0",
+          "platform": "tizen",
+          "state_rev": 7,
+          "ws": false,
+          "sub": {
+            "connections_active": 100
+          }
+        },
+        "expect": "sub_connections_active"
+      },
+      {
+        "name": "event_ok",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "channel_changed",
+          "media": {
+            "kind": "live",
+            "channel": "Beispielsender 1"
+          }
+        },
+        "expect": null
+      },
+      {
+        "name": "event_stopped_reason_ok",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "playback_stopped",
+          "reason": "ended"
+        },
+        "expect": null
+      },
+      {
+        "name": "event_reason_on_wrong_event_bad",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "channel_changed",
+          "reason": "ended"
+        },
+        "expect": "reason"
+      },
+      {
+        "name": "event_name_uppercase_bad",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "PlaybackStarted"
+        },
+        "expect": "name"
+      },
+      {
+        "name": "event_unknown_name_ok",
+        "payload": {
+          "v": 1,
+          "type": "event",
+          "name": "something_new"
+        },
+        "expect": null
+      },
+      {
+        "name": "unknown_type_ignored",
+        "payload": {
+          "v": 1,
+          "type": "future"
+        },
+        "expect": null
+      },
+      {
+        "name": "not_an_object",
+        "payload": [
+          1,
+          2
+        ],
+        "expect": "not_object"
+      }
+    ]
+  },
+  "websocket": {
+    "device_id": "hCLp1pma0XuV762nfdDkMg",
+    "sid": "LixxP6lPMdte-FRTHU6pAw.edXtRBzbuWEdpTpykHezJw",
+    "handshake": {
+      "hello": {
+        "type": "hello",
+        "v": 1,
+        "device_id": "hCLp1pma0XuV762nfdDkMg",
+        "nonce": "LixxP6lPMdte-FRTHU6pAw"
+      },
+      "challenge": {
+        "type": "challenge",
+        "v": 1,
+        "nonce": "edXtRBzbuWEdpTpykHezJw",
+        "proof": "DHRVDTLg7n0Xnfz9RftR5Cg-p7qBO-l9S-R2hlCeAAU"
+      },
+      "auth": {
+        "type": "auth",
+        "proof": "gQsRb7qWs6V61xgHb2iLCskTZbbEgoksEjsG8CpjZOg"
+      },
+      "ready": {
+        "type": "ready",
+        "v": 1
+      },
+      "nonce_message": {
+        "type": "nonce",
+        "value": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "mac": "gP143QfP2X9Mi2WxELd81UeXKtytXq91a1wL0KTnjvk"
+      }
+    },
+    "ack_example": {
+      "type": "ack",
+      "id": "kjWPhtSAbEa0Ug6c_FynZg",
+      "result": "ok",
+      "reason": "",
+      "next_nonce": "SGTLAw_440gPpwlIN5CSeg",
+      "mac": "UmgNbBS4KILlpXFjZvukglqDSsIgVQPQPYAnyYcP9aw"
+    },
+    "ack_cases": [
+      {
+        "name": "ack_ok",
+        "description": "Gueltiger ack",
+        "message": {
+          "type": "ack",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "result": "ok",
+          "reason": "",
+          "next_nonce": "SGTLAw_440gPpwlIN5CSeg",
+          "mac": "UmgNbBS4KILlpXFjZvukglqDSsIgVQPQPYAnyYcP9aw"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": null
+      },
+      {
+        "name": "ack_rejected_ok",
+        "description": "Abgelehnter Befehl, gueltig",
+        "message": {
+          "type": "ack",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "result": "rejected",
+          "reason": "control_disabled",
+          "next_nonce": "SGTLAw_440gPpwlIN5CSeg",
+          "mac": "QzlJp9dzjmgJnzX_5WwegyfY_jnOJvFZh6MwlAS0hS4"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": null
+      },
+      {
+        "name": "ack_empty_id_bad_sig",
+        "description": "Leere id bei bad_sig ist erlaubt",
+        "message": {
+          "type": "ack",
+          "id": "",
+          "result": "rejected",
+          "reason": "bad_sig",
+          "next_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "mac": "krzXSmr5W3r91dfYnnC6SbdFpHLDk-lqLlL2lPreM0U"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": null
+      },
+      {
+        "name": "ack_empty_id_ok_bad",
+        "description": "Leere id nur bei bad_request/bad_sig",
+        "message": {
+          "type": "ack",
+          "id": "",
+          "result": "ok",
+          "reason": "",
+          "next_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "mac": "NsQw4DnaeJlzh-7O8yTBipSIX7nrL6qOVASnPcexuhI"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": "unknown_id"
+      },
+      {
+        "name": "ack_bad_mac",
+        "description": "MAC mit fremdem Schluessel",
+        "message": {
+          "type": "ack",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "result": "ok",
+          "reason": "",
+          "next_nonce": "SGTLAw_440gPpwlIN5CSeg",
+          "mac": "SwyFxDNeEIiZ1i402W1LFWfG6SGNuMLt7LLvI6cgs7I"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": "bad_mac"
+      },
+      {
+        "name": "ack_unknown_id",
+        "description": "id gehoert nicht zum ausstehenden Befehl",
+        "message": {
+          "type": "ack",
+          "id": "r2rUobl-JbTEOI7Ht7OLAA",
+          "result": "ok",
+          "reason": "",
+          "next_nonce": "SGTLAw_440gPpwlIN5CSeg",
+          "mac": "tFos04liIHoC91o2leMc6ZwSSxhXYV5AjDELvK8yXxk"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": "unknown_id"
+      },
+      {
+        "name": "ack_result_reason_mismatch",
+        "description": "ok mit Grund",
+        "message": {
+          "type": "ack",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "result": "ok",
+          "reason": "error",
+          "next_nonce": "SGTLAw_440gPpwlIN5CSeg",
+          "mac": "D-IY5oMrsPTPozG5PW2d9OnC-EHR0VgZFt7rNdWA6BY"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": "bad_request"
+      },
+      {
+        "name": "ack_unknown_reason",
+        "description": "Unbekannter Grund",
+        "message": {
+          "type": "ack",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "result": "failed",
+          "reason": "boom",
+          "next_nonce": "SGTLAw_440gPpwlIN5CSeg",
+          "mac": "GGNDvt_X09B0f9JMrkGH5Gcq3EvJsdHDS5-W6e9lhvI"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": "bad_request"
+      },
+      {
+        "name": "ack_short_next_nonce",
+        "description": "next_nonce nicht 22 Zeichen",
+        "message": {
+          "type": "ack",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "result": "ok",
+          "reason": "",
+          "next_nonce": "SGTLAw_440gPpwlIN5CS",
+          "mac": "ZiiF2hP1yyZNNGpCT94pnNeJPm1vJ50ZHrRsODZvzEA"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": "bad_request"
+      },
+      {
+        "name": "ack_field_missing",
+        "description": "Feld fehlt",
+        "message": {
+          "type": "ack",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "result": "ok",
+          "reason": "",
+          "next_nonce": "SGTLAw_440gPpwlIN5CSeg"
+        },
+        "sent_id": "kjWPhtSAbEa0Ug6c_FynZg",
+        "expect": "bad_request"
+      }
+    ],
+    "command_cases": [
+      {
+        "name": "play_ok",
+        "description": "Gueltiger Befehl",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "play",
+          "arg": "",
+          "sig": "7gXGis9W8Nu03cSrxFznJWzGK3UL9m9F4HB8qkJbXTk"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "ok",
+          "reason": "",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": true
+        }
+      },
+      {
+        "name": "seek_plus_ok",
+        "description": "+10 s",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "seek_relative",
+          "arg": "10000",
+          "sig": "oJO4yp6vnoo9FL4Y-lCmuwDPg9omN_cJEU9VysCSefI"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "ok",
+          "reason": "",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": true
+        }
+      },
+      {
+        "name": "seek_minus_ok",
+        "description": "-10 s",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "seek_relative",
+          "arg": "-10000",
+          "sig": "daWGzJDbtPdyy2s8GyfFgFXaXl4xJYw5M34jUCnrYuE"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "ok",
+          "reason": "",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": true
+        }
+      },
+      {
+        "name": "seek_arg_bad",
+        "description": "Nur +-10000 erlaubt",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "seek_relative",
+          "arg": "60000",
+          "sig": "tmBgtHLg65HT7s0X-FFzwHypFGt5bY6hHecaYKHF0d0"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "unsupported",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": true
+        }
+      },
+      {
+        "name": "bad_sig",
+        "description": "Mit fremdem Schluessel signiert",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "play",
+          "arg": "",
+          "sig": "gF1qR47yLb0Of1m0FBuBcDE8jFXOq0k_cuUxKv_2aks"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "bad_sig",
+          "ack_id": "",
+          "nonce_consumed": false
+        }
+      },
+      {
+        "name": "stale_nonce",
+        "description": "Nonce nicht (mehr) aktuell",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "play",
+          "arg": "",
+          "sig": "7gXGis9W8Nu03cSrxFznJWzGK3UL9m9F4HB8qkJbXTk"
+        },
+        "pending_nonce": "SGTLAw_440gPpwlIN5CSeg",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "stale_nonce",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": false
+        }
+      },
+      {
+        "name": "no_pending_nonce",
+        "description": "Keine Nonce ausgegeben",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "play",
+          "arg": "",
+          "sig": "7gXGis9W8Nu03cSrxFznJWzGK3UL9m9F4HB8qkJbXTk"
+        },
+        "pending_nonce": null,
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "stale_nonce",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": false
+        }
+      },
+      {
+        "name": "duplicate_id",
+        "description": "Befehls-ID schon gesehen",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "play",
+          "arg": "",
+          "sig": "7gXGis9W8Nu03cSrxFznJWzGK3UL9m9F4HB8qkJbXTk"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [
+          "kjWPhtSAbEa0Ug6c_FynZg"
+        ],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "duplicate_id",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": true
+        }
+      },
+      {
+        "name": "control_disabled",
+        "description": "Steuerung in der App aus",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "pause",
+          "arg": "",
+          "sig": "Y-03-gPzAlEbodyfDMVM8EyWzMRcO2MPw9MYBvkQ06E"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": false,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "control_disabled",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": true
+        }
+      },
+      {
+        "name": "nothing_playing",
+        "description": "Nichts laeuft",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "pause",
+          "arg": "",
+          "sig": "Y-03-gPzAlEbodyfDMVM8EyWzMRcO2MPw9MYBvkQ06E"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": true,
+        "expect": {
+          "result": "rejected",
+          "reason": "nothing_playing",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": true
+        }
+      },
+      {
+        "name": "bad_sig_keeps_nonce",
+        "description": "Falsche Signatur: Nonce bleibt, ack mit leerer id",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "play",
+          "arg": "",
+          "sig": "gF1qR47yLb0Of1m0FBuBcDE8jFXOq0k_cuUxKv_2aks"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "bad_sig",
+          "ack_id": "",
+          "nonce_consumed": false
+        }
+      },
+      {
+        "name": "id_wrong_length",
+        "description": "id nicht 22 Zeichen",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZ",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "play",
+          "arg": "",
+          "sig": "gliAc-b-jSXOUnX9X2lxxsbkXBefBgqXL2eHpfTODso"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "bad_request",
+          "ack_id": "",
+          "nonce_consumed": false
+        }
+      },
+      {
+        "name": "nonce_wrong_length",
+        "description": "nonce nicht 22 Zeichen",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQA",
+          "cmd": "play",
+          "arg": "",
+          "sig": "rcpBN135sA850kIdh0Hav50q4-jZNMExmCU9H7g_zqY"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "bad_request",
+          "ack_id": "",
+          "nonce_consumed": false
+        }
+      },
+      {
+        "name": "field_not_string",
+        "description": "arg ist keine Zeichenkette",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "play",
+          "arg": 5,
+          "sig": "7gXGis9W8Nu03cSrxFznJWzGK3UL9m9F4HB8qkJbXTk"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "bad_request",
+          "ack_id": "",
+          "nonce_consumed": false
+        }
+      },
+      {
+        "name": "unknown_command",
+        "description": "Unbekannter Befehl",
+        "message": {
+          "type": "command",
+          "id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "reboot",
+          "arg": "",
+          "sig": "oe4ahSQvdvbHrk6kzarp6yhPA7Us7T6tuZcwRid0n5o"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": true,
+        "nothing_playing": false,
+        "expect": {
+          "result": "rejected",
+          "reason": "unsupported",
+          "ack_id": "kjWPhtSAbEa0Ug6c_FynZg",
+          "nonce_consumed": true
+        }
+      },
+      {
+        "name": "unpair_ok",
+        "description": "Trennen von HA aus, auch ohne Steuerung",
+        "message": {
+          "type": "command",
+          "id": "r2rUobl-JbTEOI7Ht7OLAA",
+          "nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+          "cmd": "unpair",
+          "arg": "",
+          "sig": "g9jCuVqNr4yBtwHDbv_X8UzZuopnf8kbKZKBmqTE_L4"
+        },
+        "pending_nonce": "ka6UsJRjXV8T0uUqf_9FxQ",
+        "seen_ids": [],
+        "control_enabled": false,
+        "nothing_playing": false,
+        "expect": {
+          "result": "ok",
+          "reason": "",
+          "ack_id": "r2rUobl-JbTEOI7Ht7OLAA",
+          "nonce_consumed": true
+        }
+      }
+    ]
+  }
+}
