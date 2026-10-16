@@ -320,11 +320,12 @@ def test_translations_complete_and_consistent():
             assert ph(text) == ph(eng[path]), (lang, path)
     # Platzhalter, die der Code liefert
     assert ph(en["config"]["progress"]["wait_for_app"]) == {"code", "address"}
+    assert ph(en["config"]["progress"]["wait_for_app_alt"]) == {"code", "address", "others"}
 
 
 def test_manifest():
     m = json.loads((PKG / "manifest.json").read_text(encoding="utf-8"))
-    assert m["domain"] == "itrend_player" and m["version"] == "0.3.0"
+    assert m["domain"] == "itrend_player" and m["version"] == "0.3.1"
     assert m["config_flow"] is True and m["integration_type"] == "device"
     assert m["iot_class"] == "local_push" and m["requirements"] == []
     assert m["dependencies"] == ["webhook", "http"]

@@ -35,7 +35,8 @@
       }
     },
     "progress": {
-      "wait_for_app": "TV'nizde iTrend Player'ı açın, Ayarlar > Home Assistant bölümüne gidin ve bu adresi ve kodu girin:\n\n**Adres:** {address}\n\n**Kod:** **{code}**\n\nKod 5 dakika geçerlidir ve yalnızca bir kez kullanılabilir. Uygulama eşleştiği anda bu pencere kendiliğinden güncellenir."
+      "wait_for_app": "TV'nizde iTrend Player'ı açın, Ayarlar > Home Assistant bölümüne gidin ve bu adresi ve kodu girin:\n\n**Adres (önerilen):** {address}\n\n**Kod:** **{code}**\n\nKod 5 dakika geçerlidir ve yalnızca bir kez kullanılabilir. Uygulama eşleştiği anda bu pencere kendiliğinden güncellenir.",
+      "wait_for_app_alt": "TV'nizde iTrend Player'ı açın, Ayarlar > Home Assistant bölümüne gidin ve bu adresi ve kodu girin:\n\n**Adres (önerilen):** {address}\n\n**Kod:** **{code}**\n\nKod 5 dakika geçerlidir ve yalnızca bir kez kullanılabilir. Uygulama eşleştiği anda bu pencere kendiliğinden güncellenir.\n\n**Denenebilecek diğer adresler:**\n{others}\n\nEşleştirme çalışmazsa adresi bağlantı noktasıyla deneyin (örneğin :8123)."
     },
     "error": {
       "code_expired": "Kodun süresi doldu. Lütfen yeni bir kod oluşturun.",

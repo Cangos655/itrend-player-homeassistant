@@ -73,7 +73,7 @@ async def _start(hass):
         DOMAIN, context={"source": config_entries.SOURCE_USER})
     assert result["type"] == FlowResultType.SHOW_PROGRESS
     assert result["step_id"] == "pair"
-    assert result["progress_action"] == "wait_for_app"
+    assert result["progress_action"] in ("wait_for_app", "wait_for_app_alt")
     return result
 
 
@@ -84,7 +84,7 @@ async def test_flow_shows_code_and_address(hass, env):
     assert manager.active is not None
     assert ph["code"] == manager.active.display_code
     assert len(ph["code"].replace(" ", "")) == 6 and ph["code"][3] == " "
-    assert ph["address"].startswith("http")
+    assert ph["address"].startswith("http") and "others" in ph
 
 
 async def test_full_flow_creates_entry_and_device(hass, env):
@@ -372,3 +372,12 @@ def _default(result):
     schema = result["data_schema"].schema
     key = next(k for k in schema if k == "allow_remote")
     return key.default()
+
+
+async def test_flow_shows_port_variant_for_external_url(hass, env):
+    await hass.config.async_update(external_url="https://cangos.duckdns.org")
+    result = await _start(hass)
+    ph = result["description_placeholders"]
+    assert result["progress_action"] == "wait_for_app_alt"
+    assert ph["address"].startswith("https://cangos.duckdns.org:")
+    assert "- https://cangos.duckdns.org" in ph["others"]

@@ -35,7 +35,8 @@
       }
     },
     "progress": {
-      "wait_for_app": "Open iTrend Player on your TV, go to Settings > Home Assistant and enter this address and code:\n\n**Address:** {address}\n\n**Code:** **{code}**\n\nThe code is valid for 5 minutes and can only be used once. This window updates by itself as soon as the app has paired."
+      "wait_for_app": "Open iTrend Player on your TV, go to Settings > Home Assistant and enter this address and code:\n\n**Address (recommended):** {address}\n\n**Code:** **{code}**\n\nThe code is valid for 5 minutes and can only be used once. This window updates by itself as soon as the app has paired.",
+      "wait_for_app_alt": "Open iTrend Player on your TV, go to Settings > Home Assistant and enter this address and code:\n\n**Address (recommended):** {address}\n\n**Code:** **{code}**\n\nThe code is valid for 5 minutes and can only be used once. This window updates by itself as soon as the app has paired.\n\n**Other addresses to try:**\n{others}\n\nIf pairing does not work, try the address with the port (for example :8123)."
     },
     "error": {
       "code_expired": "The code expired. Please create a new code.",

@@ -34,6 +34,8 @@ Without HACS: copy the folder `custom_components/itrend_player` into `config/cus
 3. In the app on the TV: **Settings > Home Assistant**, enter address and code and confirm the transmission notes. As soon as the app has paired, Home Assistant asks about network access (see below) and then creates the device (name taken from the app).
 4. Several TVs: repeat; each TV gets its own device and its own secret.
 
+**Address on the TV:** The dialog shows the recommended address and further candidates. If Home Assistant does not run on port 80/443 (usually 8123), the **port belongs in the address** even if your `external_url` omits it (for example `https://example.duckdns.org:8123`). If pairing does not work, try the address with the port. `.local` names are not resolved by the apps; use the IP address or a domain name. With `https` the domain name must match the certificate (an IP address will not work then).
+
 **Renew pairing:** if the app ended the pairing or it is no longer valid, Home Assistant offers **Reconfigure / Renew pairing** on the entry. Entities and history are kept.
 
 **Delete:** deleting the device or entry removes the webhook and the key. The app will then show "renew pairing" and can be disconnected.
@@ -111,6 +113,8 @@ Ohne HACS: den Ordner `custom_components/itrend_player` in das Verzeichnis `conf
 2. Home Assistant zeigt einen **sechsstelligen Code** und die **Adresse** Ihrer Home-Assistant-Instanz an. Der Code gilt 5 Minuten, nur einmal und erlaubt höchstens 3 Fehlversuche.
 3. In der App am Fernseher: **Einstellungen > Home Assistant**, Adresse und Code eingeben, die Hinweise zur Übertragung bestätigen. Sobald die App gekoppelt hat, fragt Home Assistant nach dem Netzwerkzugriff (siehe unten) und legt dann das Gerät an (Name aus der App).
 4. Mehrere Fernseher: Schritte wiederholen; jeder Fernseher hat ein eigenes Gerät und ein eigenes Geheimnis.
+
+**Adresse am Fernseher:** Der Dialog zeigt die empfohlene Adresse und weitere Kandidaten. Läuft Home Assistant nicht auf Port 80/443 (meist 8123), gehört der **Port in die Adresse**, auch wenn Ihre `external_url` ihn nicht nennt (z. B. `https://beispiel.duckdns.org:8123`). Funktioniert die Kopplung nicht, probieren Sie die Adresse mit Port. Namen auf `.local` werden von den Apps nicht aufgelöst; nutzen Sie die IP-Adresse oder einen Domainnamen. Bei `https` muss der Domainname zum Zertifikat passen (eine IP-Adresse funktioniert dann nicht).
 
 **Kopplung erneuern:** Hat die App die Kopplung beendet oder ist sie ungültig, bietet Home Assistant am Eintrag **Neu konfigurieren / Kopplung erneuern** an. Entitäten und Verlauf bleiben erhalten.
 

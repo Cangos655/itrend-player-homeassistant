@@ -11,11 +11,12 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlowWithReload
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import issue_registry as ir
-from homeassistant.helpers.network import NoURLAvailableError, get_url
+from homeassistant.helpers.network import get_url
 from homeassistant.helpers.storage import Store
 from homeassistant.setup import async_setup_component
 
 from . import protocol as proto
+from .address import address_candidates
 from .const import (
     CONF_APP_VERSION,
     CONF_DEVICE_ID,
@@ -38,20 +39,22 @@ from .pairing import ActiveCode, FailureReason, PairingBlocked, PairingManager, 
 _LOGGER = logging.getLogger(__name__)
 
 
-def _ha_address(hass: HomeAssistant) -> str:
-    """Adresse, die der Nutzer in der App eintippt (Basisadresse von HA)."""
-    for kwargs in (
-        {"require_current_request": True, "allow_external": False},
-        {"allow_external": False},
-        {"prefer_external": False},
-    ):
-        try:
-            return get_url(hass, allow_cloud=False, **kwargs)  # type: ignore[arg-type]
-        except NoURLAvailableError:
-            continue
-        except Exception:  # noqa: BLE001
-            continue
-    return "http://<HA-Adresse>:8123"
+def _ha_addresses(hass: HomeAssistant) -> list[str]:
+    """Kandidaten fuer die Adresse in der App (empfohlene zuerst)."""
+    request_url = None
+    try:
+        request_url = get_url(hass, require_current_request=True, allow_cloud=False)
+    except Exception:  # noqa: BLE001  (kein Anfragekontext)
+        request_url = None
+    api = hass.config.api
+    return address_candidates(
+        internal_url=hass.config.internal_url,
+        external_url=hass.config.external_url,
+        server_port=api.port if api else None,
+        use_ssl=bool(api and api.use_ssl),
+        local_ip=api.local_ip if api else None,
+        request_url=request_url,
+    )
 
 
 class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -112,12 +115,14 @@ class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
             )
         assert self._task is not None
         if not self._task.done():
+            addresses = _ha_addresses(self.hass) or ["http://<HA-Adresse>:8123"]
             return self.async_show_progress(
                 step_id="pair",
-                progress_action="wait_for_app",
+                progress_action="wait_for_app" if len(addresses) == 1 else "wait_for_app_alt",
                 description_placeholders={
                     "code": self._active.display_code,
-                    "address": _ha_address(self.hass),
+                    "address": addresses[0],
+                    "others": "\n".join(f"- {a}" for a in addresses[1:]),
                 },
                 progress_task=self._task,
             )

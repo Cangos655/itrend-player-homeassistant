@@ -35,7 +35,8 @@
       }
     },
     "progress": {
-      "wait_for_app": "Öffnen Sie iTrend Player am Fernseher, gehen Sie zu Einstellungen > Home Assistant und geben Sie diese Adresse und diesen Code ein:\n\n**Adresse:** {address}\n\n**Code:** **{code}**\n\nDer Code gilt 5 Minuten und nur einmal. Dieses Fenster aktualisiert sich selbst, sobald die App gekoppelt hat."
+      "wait_for_app": "Öffnen Sie iTrend Player am Fernseher, gehen Sie zu Einstellungen > Home Assistant und geben Sie diese Adresse und diesen Code ein:\n\n**Adresse (empfohlen):** {address}\n\n**Code:** **{code}**\n\nDer Code gilt 5 Minuten und nur einmal. Dieses Fenster aktualisiert sich selbst, sobald die App gekoppelt hat.",
+      "wait_for_app_alt": "Öffnen Sie iTrend Player am Fernseher, gehen Sie zu Einstellungen > Home Assistant und geben Sie diese Adresse und diesen Code ein:\n\n**Adresse (empfohlen):** {address}\n\n**Code:** **{code}**\n\nDer Code gilt 5 Minuten und nur einmal. Dieses Fenster aktualisiert sich selbst, sobald die App gekoppelt hat.\n\n**Weitere Adressen zum Ausprobieren:**\n{others}\n\nFunktioniert die Kopplung nicht, probieren Sie die Adresse mit Port (z. B. :8123)."
     },
     "error": {
       "code_expired": "Der Code ist abgelaufen. Bitte neuen Code erzeugen.",
