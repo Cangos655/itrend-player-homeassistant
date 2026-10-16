@@ -11,6 +11,8 @@
 
 Diese Integration zeigt in Home Assistant, was iTrend Player auf Ihrem Fernseher gerade tut (Android TV / Fire TV und Samsung/Tizen). Die App liefert keine Inhalte; die Integration empfängt nur den Zustand der App, lokal in Ihrem Netz. Es gibt keine Cloud und keine Weitergabe an iTrend24 oder Dritte.
 
+Das Symbol erscheint ab Home Assistant 2026.3, ältere Versionen zeigen das Standard-Icon.
+
 ### Installation über HACS (benutzerdefiniertes Repository)
 
 1. HACS öffnen, Menü (drei Punkte) > **Benutzerdefinierte Repositories**.
@@ -78,6 +80,8 @@ pytest
 ## English
 
 This integration shows in Home Assistant what iTrend Player is doing on your TV (Android TV / Fire TV and Samsung/Tizen). The app provides no content; the integration only receives the app's state, locally on your network. There is no cloud and nothing is sent to iTrend24 or third parties.
+
+The icon appears from Home Assistant 2026.3 on; older versions show the default icon.
 
 ### Installation via HACS (custom repository)
 

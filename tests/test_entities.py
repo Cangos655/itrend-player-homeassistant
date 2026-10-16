@@ -324,7 +324,7 @@ def test_translations_complete_and_consistent():
 
 def test_manifest():
     m = json.loads((PKG / "manifest.json").read_text(encoding="utf-8"))
-    assert m["domain"] == "itrend_player" and m["version"] == "0.2.1"
+    assert m["domain"] == "itrend_player" and m["version"] == "0.2.2"
     assert m["config_flow"] is True and m["integration_type"] == "device"
     assert m["iot_class"] == "local_push" and m["requirements"] == []
     assert m["dependencies"] == ["webhook", "http"]
@@ -554,3 +554,23 @@ async def test_unknown_fields_and_types_are_dropped(hass, env, caplog):
     await hass.async_block_till_done()
     assert events == []
     assert "Geheim" not in caplog.text
+
+
+def test_brand_images_exist_with_expected_sizes():
+    import struct
+    brand = PKG / "brand"
+
+    def size(path):
+        head = path.read_bytes()[:24]
+        assert head[:8] == b"\x89PNG\r\n\x1a\n", path.name
+        return struct.unpack(">II", head[16:24])
+
+    for prefix in ("", "dark_"):
+        assert size(brand / f"{prefix}icon.png") == (256, 256)
+        assert size(brand / f"{prefix}icon@2x.png") == (512, 512)
+        w1, h1 = size(brand / f"{prefix}logo.png")
+        w2, h2 = size(brand / f"{prefix}logo@2x.png")
+        assert 128 <= h1 <= 256 and w1 > h1
+        assert (w2, h2) == (w1 * 2, h1 * 2) and 256 <= h2 <= 512
+    for path in brand.glob("*.png"):
+        assert path.stat().st_size < 60_000, path.name
