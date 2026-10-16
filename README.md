@@ -2,8 +2,8 @@
 
 [Deutsch](#deutsch) | [English](#english)
 
-> Status: **Stufe 1 (Version 0.1.0)**: Kopplung, Zustand empfangen, Entitäten. Steuerung (Play/Pause/…) folgt später (Stufe 3) und braucht eine eigene Sicherheitsprüfung.
-> Status: **Stage 1 (version 0.1.0)**: pairing, receiving state, entities. Control (play/pause/…) comes later (stage 3) after a separate security review.
+> Status: **Version 0.3.0**: sichere Kopplung, Zustand empfangen (Titel, Serie, Cover/Senderlogo, Playlist-Status, Abo-Ablauf, Verbindungen), Sensoren und Ereignisse. Steuerung (Play/Pause/…) folgt später (Stufe 3) und braucht eine eigene Sicherheitsprüfung.
+> Status: **Version 0.3.0**: secure pairing, receiving state (title, series, cover/channel logo, playlist status, subscription expiry, connections), sensors and events. Control (play/pause/…) comes later (stage 3) after a separate security review.
 
 ---
 
@@ -12,6 +12,13 @@
 Diese Integration zeigt in Home Assistant, was iTrend Player auf Ihrem Fernseher gerade tut (Android TV / Fire TV und Samsung/Tizen). Die App liefert keine Inhalte; die Integration empfängt nur den Zustand der App, lokal in Ihrem Netz. Es gibt keine Cloud und keine Weitergabe an iTrend24 oder Dritte.
 
 Das Symbol erscheint ab Home Assistant 2026.3, ältere Versionen zeigen das Standard-Icon.
+
+**Was die Integration zeigt:**
+- Media-Player mit Zustand, Titel, Serie, Staffel, Folge, Dauer und Position, dazu Cover oder Senderlogo (wenn freigegeben)
+- Sensor „Läuft gerade“ (Titel als Text), App-Version, Abo-Ablauf, erlaubte und aktive Verbindungen
+- Playlist-Status: letzte Aktualisierung, Anzahl Sender, Filme, Serien, Fehlerart
+- „App aktiv“ und Ereignisse (`playback_started`, `playback_stopped`, `channel_changed`, `trailer_opened`, `playlist_refreshed`, `playlist_failed`)
+- Kopplung per Code (SRP-6a), jede Meldung signiert; standardmäßig sendet die App nichts, jede Datenart schaltest du einzeln ein; Inhalte aus mit PIN gesperrten Kategorien werden nie gesendet
 
 ### Installation über HACS (benutzerdefiniertes Repository)
 
@@ -83,6 +90,13 @@ pytest
 This integration shows in Home Assistant what iTrend Player is doing on your TV (Android TV / Fire TV and Samsung/Tizen). The app provides no content; the integration only receives the app's state, locally on your network. There is no cloud and nothing is sent to iTrend24 or third parties.
 
 The icon appears from Home Assistant 2026.3 on; older versions show the default icon.
+
+**What the integration shows:**
+- Media player with state, title, series, season, episode, duration and position, plus cover or channel logo (when allowed)
+- "Now playing" sensor (title as text), app version, subscription expiry, allowed and active connections
+- Playlist status: last refresh, number of channels, movies, series, kind of error
+- "App active" and events (`playback_started`, `playback_stopped`, `channel_changed`, `trailer_opened`, `playlist_refreshed`, `playlist_failed`)
+- Pairing by code (SRP-6a), every message signed; by default the app sends nothing, you switch on each kind of data separately; content from categories locked with the PIN is never sent
 
 ### Installation via HACS (custom repository)
 
