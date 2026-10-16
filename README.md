@@ -60,7 +60,7 @@ Nach etwa **90 Sekunden** ohne Lebenszeichen (drei verpasste Herzschläge) werde
 
 - Gesendet wird nur, was Sie in der App freigeben (nur Status, Titel und Sender, Abo-Ablauf). Standard ist: nichts. Zugangsdaten, Playlist- und Anbieteradressen werden nie gesendet.
 - Die Übertragung erfolgt per **signiertem Webhook** (HMAC-SHA-256, Schlüssel wird nie übertragen). Bei `http` im Heimnetz ist der Inhalt **nicht verschlüsselt**: Titel sind im selben Netz mitlesbar. Wenn möglich `https` verwenden.
-- Schlüssel liegen im Speicher der Konfigurationseinträge von Home Assistant. Titel und Sender werden nicht dauerhaft gespeichert; die Integration nimmt Titelattribute vom Recorder-Verlauf aus. Ereignisse (`itrend_player_event`) können Titel enthalten; Automationen, Logbuch und Protokolle sind Ihre Sache.
+- Schlüssel liegen im Speicher der Konfigurationseinträge von Home Assistant. Die Integration selbst speichert keine Titel und Sender; sie nimmt Titelattribute des Media-Players vom Recorder-Verlauf aus. **Ausnahme:** Der Zustand des Sensors „Läuft gerade“ ist der Titel, und den speichert der Recorder von Home Assistant im Verlauf. Wer das nicht möchte, schließt den Sensor per `recorder: exclude` aus (Beispiel oben bei der Sensorbeschreibung) oder deaktiviert ihn. Ereignisse (`itrend_player_event`) können Titel enthalten; Automationen, Logbuch und Protokolle sind Ihre Sache.
 - Veröffentlichen Sie keine Home-Assistant-Logs: Home Assistant selbst schreibt Webhook-Adressen unregistrierter Webhooks in das Protokoll.
 - Wird ein Kopplungscode gesperrt, ohne dass Sie ihn falsch eingegeben haben, versucht jemand im Netz zu stören. Erzeugen Sie einen neuen Code.
 
@@ -129,7 +129,7 @@ After about **90 seconds** without a sign of life (three missed heartbeats) enti
 
 - Only what you allow in the app is sent (status only, titles and channels, subscription expiry). The default is nothing. Credentials, playlist and provider addresses are never sent.
 - Messages are sent as a **signed webhook** (HMAC-SHA-256; the key is never transmitted). Over `http` in your home network the content is **not encrypted**: titles can be read on the same network. Use `https` where possible.
-- Keys are kept in Home Assistant's config entry storage. Titles and channels are not stored permanently; the integration excludes title attributes from the recorder history. Events (`itrend_player_event`) may contain titles; automations, logbook and logs are your responsibility.
+- Keys are kept in Home Assistant's config entry storage. The integration itself stores no titles or channels; it excludes the media player's title attributes from the recorder history. **Exception:** the state of the "Now playing" sensor is the title, and the Home Assistant recorder stores it in the history. If you do not want that, exclude the sensor with `recorder: exclude` (example next to the sensor description above) or disable it. Events (`itrend_player_event`) may contain titles; automations, logbook and logs are your responsibility.
 - Do not publish Home Assistant logs: Home Assistant itself writes webhook addresses of unregistered webhooks to the log.
 - If a pairing code gets locked without you having entered it wrongly, someone on your network is trying to interfere. Create a new code.
 
