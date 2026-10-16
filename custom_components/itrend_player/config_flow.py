@@ -69,6 +69,7 @@ class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
         self._task: asyncio.Task[Any] | None = None
         self._outcome: PairingResult | FailureReason | None = None
         self._blocked_minutes = 0
+        self._result: PairingResult | None = None
 
     @property
     def _manager(self) -> PairingManager:
@@ -130,7 +131,8 @@ class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
         self._active = None
         self._task = None
         if isinstance(outcome, PairingResult):
-            return await self._async_store(outcome)
+            self._result = outcome
+            return await self._remote_step(None)
         reason = outcome.value if isinstance(outcome, FailureReason) else "expired"
         return self.async_show_form(step_id="retry", errors={"base": f"code_{reason}"},
                                     description_placeholders={"minutes": "10"})
@@ -141,7 +143,39 @@ class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
         self._outcome = None
         return await self.async_step_pair()
 
-    async def _async_store(self, result: PairingResult) -> ConfigFlowResult:
+    def _remote_default(self) -> tuple[bool, str]:
+        """Vorbelegung der Option und Schluessel des Begruendungstexts."""
+        assert self._result is not None
+        if self._result.remote:
+            return True, "remote_recommended"
+        entries = self.hass.config_entries.async_entries(DOMAIN)
+        if self.source == "reauth":
+            entries = [self._get_reauth_entry(), *entries]
+        for entry in reversed(entries):
+            if entry.options.get(OPT_ALLOW_REMOTE):
+                return True, "remote_inherit"
+        return False, "remote_default"
+
+    async def _remote_step(self, user_input: dict[str, Any] | None, step_id: str | None = None) -> ConfigFlowResult:
+        assert self._result is not None
+        default, step = self._remote_default()
+        if user_input is not None:
+            return await self._async_store(self._result, bool(user_input[OPT_ALLOW_REMOTE]))
+        return self.async_show_form(
+            step_id=step_id or step,
+            data_schema=vol.Schema({vol.Required(OPT_ALLOW_REMOTE, default=default): bool}),
+        )
+
+    async def async_step_remote_recommended(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._remote_step(user_input, "remote_recommended")
+
+    async def async_step_remote_inherit(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._remote_step(user_input, "remote_inherit")
+
+    async def async_step_remote_default(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        return await self._remote_step(user_input, "remote_default")
+
+    async def _async_store(self, result: PairingResult, allow_remote: bool) -> ConfigFlowResult:
         data = {
             CONF_DEVICE_ID: result.device_id,
             CONF_WEBHOOK_ID: result.webhook_id,
@@ -160,11 +194,12 @@ class ITrendPlayerConfigFlow(ConfigFlow, domain=DOMAIN):
             # Neue Kopplung = neue Sequenz ab 1: alte Reservierung verwerfen.
             await Store(self.hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}").async_remove()
             return self.async_update_reload_and_abort(
-                entry, unique_id=result.device_id, title=result.name, data=data
+                entry, unique_id=result.device_id, title=result.name, data=data,
+                options={**entry.options, OPT_ALLOW_REMOTE: allow_remote},
             )
         await self.async_set_unique_id(result.device_id)
         self._abort_if_unique_id_configured()
-        return self.async_create_entry(title=result.name, data=data)
+        return self.async_create_entry(title=result.name, data=data, options={OPT_ALLOW_REMOTE: allow_remote})
 
     @callback
     def async_remove(self) -> None:

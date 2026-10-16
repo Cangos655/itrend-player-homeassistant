@@ -11,6 +11,27 @@
       "retry": {
         "title": "Pairing did not complete",
         "description": "Select Submit to show a new code. If a code is locked without you having entered it wrongly, someone on your network may be interfering; create a new code."
+      },
+      "remote_recommended": {
+        "title": "Network access",
+        "description": "Pairing came from outside your home network: recommended. Needed if Home Assistant is reached through a domain name, proxy, Nabu Casa or hairpin NAT; otherwise no messages arrive (the app shows 'unconfirmed (empty_body)'). Messages are signed either way.",
+        "data": {
+          "allow_remote": "Also allow requests from outside the home network"
+        }
+      },
+      "remote_inherit": {
+        "title": "Network access",
+        "description": "Taken over from an existing entry of this integration. Needed if Home Assistant is reached through a domain name, proxy, Nabu Casa or hairpin NAT; otherwise no messages arrive (the app shows 'unconfirmed (empty_body)'). Messages are signed either way.",
+        "data": {
+          "allow_remote": "Also allow requests from outside the home network"
+        }
+      },
+      "remote_default": {
+        "title": "Network access",
+        "description": "Pairing came from your home network: usually not needed. Needed if Home Assistant is reached through a domain name, proxy, Nabu Casa or hairpin NAT; otherwise no messages arrive (the app shows 'unconfirmed (empty_body)'). Messages are signed either way.",
+        "data": {
+          "allow_remote": "Also allow requests from outside the home network"
+        }
       }
     },
     "progress": {

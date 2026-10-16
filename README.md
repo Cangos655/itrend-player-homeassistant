@@ -23,12 +23,14 @@ Ohne HACS: den Ordner `custom_components/itrend_player` in das Verzeichnis `conf
 
 1. **Einstellungen > Geräte & Dienste > Integration hinzufügen > iTrend Player.**
 2. Home Assistant zeigt einen **sechsstelligen Code** und die **Adresse** Ihrer Home-Assistant-Instanz an. Der Code gilt 5 Minuten, nur einmal und erlaubt höchstens 3 Fehlversuche.
-3. In der App am Fernseher: **Einstellungen > Home Assistant**, Adresse und Code eingeben, die Hinweise zur Übertragung bestätigen. Sobald die App gekoppelt hat, legt Home Assistant das Gerät an (Name aus der App).
+3. In der App am Fernseher: **Einstellungen > Home Assistant**, Adresse und Code eingeben, die Hinweise zur Übertragung bestätigen. Sobald die App gekoppelt hat, fragt Home Assistant nach dem Netzwerkzugriff (siehe unten) und legt dann das Gerät an (Name aus der App).
 4. Mehrere Fernseher: Schritte wiederholen; jeder Fernseher hat ein eigenes Gerät und ein eigenes Geheimnis.
 
 **Kopplung erneuern:** Hat die App die Kopplung beendet oder ist sie ungültig, bietet Home Assistant am Eintrag **Neu konfigurieren / Kopplung erneuern** an. Entitäten und Verlauf bleiben erhalten.
 
 **Löschen:** Gerät oder Eintrag in Home Assistant löschen entfernt Webhook und Schlüssel. Die App meldet danach „Kopplung erneuern“ und kann getrennt werden.
+
+**Meldungen kommen nicht an (`empty_body`)?** Zeigt die App „nicht bestätigt (`empty_body`)“ und bleibt „App aktiv“ aus, erreicht der Fernseher Home Assistant über Domain, Proxy, Nabu Casa oder Hairpin-NAT, und Home Assistant verwirft Meldungen von außerhalb des Heimnetzes. Der Einrichtungsdialog fragt nach der Kopplung nach der Option **Auch Anfragen von außerhalb des Heimnetzes erlauben** (vorbelegt „an“, wenn die Kopplung von außen kam oder ein anderer Eintrag die Option nutzt). Nachträglich ändern: Eintrag > Zahnrad (Konfigurieren). Die Meldungen sind in jedem Fall signiert.
 
 **Netzwerkzugriff (Option):** Normalerweise nimmt die Integration nur Meldungen aus dem Heimnetz an. Erreicht der Fernseher Home Assistant über einen Domainnamen, Proxy oder Hairpin-NAT (Absender erscheint als öffentliche Adresse), beantwortet Home Assistant die Meldungen mit leerem Body; die App zeigt „nicht bestätigt (`empty_body`)“ und „App aktiv“ bleibt aus. Dann am Eintrag **Konfigurieren > Auch Anfragen von außerhalb des Heimnetzes erlauben** einschalten. Die Sicherheit ändert sich kaum, da jede Meldung signiert ist und Sequenznummern und Rate-Limits weiter gelten.
 
@@ -89,12 +91,14 @@ Without HACS: copy the folder `custom_components/itrend_player` into `config/cus
 
 1. **Settings > Devices & services > Add integration > iTrend Player.**
 2. Home Assistant shows a **six-digit code** and the **address** of your Home Assistant instance. The code is valid for 5 minutes, works once, and allows at most 3 wrong attempts.
-3. In the app on the TV: **Settings > Home Assistant**, enter address and code and confirm the transmission notes. As soon as the app has paired, Home Assistant creates the device (name taken from the app).
+3. In the app on the TV: **Settings > Home Assistant**, enter address and code and confirm the transmission notes. As soon as the app has paired, Home Assistant asks about network access (see below) and then creates the device (name taken from the app).
 4. Several TVs: repeat; each TV gets its own device and its own secret.
 
 **Renew pairing:** if the app ended the pairing or it is no longer valid, Home Assistant offers **Reconfigure / Renew pairing** on the entry. Entities and history are kept.
 
 **Delete:** deleting the device or entry removes the webhook and the key. The app will then show "renew pairing" and can be disconnected.
+
+**Messages do not arrive (`empty_body`)?** If the app shows "unconfirmed (`empty_body`)" and "App active" stays off, the TV reaches Home Assistant through a domain, proxy, Nabu Casa or hairpin NAT and Home Assistant drops messages from outside the home network. After pairing, the setup dialog asks for the option **Also allow requests from outside the home network** (preset to on if pairing came from outside or another entry uses the option). Change it later via entry > gear (Configure). Messages are signed either way.
 
 **Network access (option):** By default the integration only accepts messages from your home network. If the TV reaches Home Assistant through a domain name, proxy or hairpin NAT (the sender appears as a public address), Home Assistant answers with an empty body; the app shows "unconfirmed (`empty_body`)" and "App active" stays off. Then enable **Configure > Also allow requests from outside the home network** on the entry. Security hardly changes because every message is signed and sequence numbers and rate limits still apply.
 

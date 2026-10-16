@@ -11,6 +11,27 @@
       "retry": {
         "title": "Eşleştirme tamamlanamadı",
         "description": "Yeni bir kod göstermek için Gönder'i seçin. Kodu yanlış girmediğiniz halde kod kilitlenirse, ağınızda biri müdahale ediyor olabilir; yeni bir kod oluşturun."
+      },
+      "remote_recommended": {
+        "title": "Ağ erişimi",
+        "description": "Eşleştirme ev ağınızın dışından geldi: önerilir. Home Assistant'a alan adı, proxy, Nabu Casa veya hairpin NAT ile ulaşılıyorsa gereklidir; aksi halde ileti ulaşmaz (uygulama 'doğrulanmadı (empty_body)' gösterir). İletiler her durumda imzalıdır.",
+        "data": {
+          "allow_remote": "Ev ağı dışından gelen isteklere de izin ver"
+        }
+      },
+      "remote_inherit": {
+        "title": "Ağ erişimi",
+        "description": "Bu entegrasyonun mevcut bir girişinden devralındı. Home Assistant'a alan adı, proxy, Nabu Casa veya hairpin NAT ile ulaşılıyorsa gereklidir; aksi halde ileti ulaşmaz (uygulama 'doğrulanmadı (empty_body)' gösterir). İletiler her durumda imzalıdır.",
+        "data": {
+          "allow_remote": "Ev ağı dışından gelen isteklere de izin ver"
+        }
+      },
+      "remote_default": {
+        "title": "Ağ erişimi",
+        "description": "Eşleştirme ev ağınızdan geldi: genellikle gerekmez. Home Assistant'a alan adı, proxy, Nabu Casa veya hairpin NAT ile ulaşılıyorsa gereklidir; aksi halde ileti ulaşmaz (uygulama 'doğrulanmadı (empty_body)' gösterir). İletiler her durumda imzalıdır.",
+        "data": {
+          "allow_remote": "Ev ağı dışından gelen isteklere de izin ver"
+        }
       }
     },
     "progress": {

@@ -42,11 +42,28 @@ async def env(hass, hass_client_no_auth):
     return manager, client
 
 
-async def _finish(hass, result):
-    """Nach Ende der Wartephase bis zum Ergebnis weiterschalten."""
+async def _finish(hass, result, remote=None):
+    """Nach Ende der Wartephase weiter; den Netzwerk-Schritt mit Vorbelegung (oder `remote`) bestaetigen."""
+    for _ in range(4):
+        if result["type"] == FlowResultType.FORM and result["step_id"].startswith("remote_"):
+            return await hass.config_entries.flow.async_configure(
+                result["flow_id"], {} if remote is None else {"allow_remote": remote})
+        result = await hass.config_entries.flow.async_configure(result["flow_id"])
+        if result["type"] == FlowResultType.FORM and result["step_id"].startswith("remote_"):
+            continue
+        if result["type"] != FlowResultType.SHOW_PROGRESS_DONE:
+            return result
+    raise AssertionError(result)
+
+
+async def _to_remote_step(hass, manager, client, **kw):
+    result = await _start(hass)
+    out = await AppSim(code=manager.active.code, **kw).pair(client)
+    assert out["status"] == 200
+    await hass.async_block_till_done()
     for _ in range(3):
         result = await hass.config_entries.flow.async_configure(result["flow_id"])
-        if result["type"] != FlowResultType.SHOW_PROGRESS_DONE:
+        if result["type"] == FlowResultType.FORM:
             return result
     raise AssertionError(result)
 
@@ -259,3 +276,99 @@ def ref_build(key, fin, seq):
     import reference as ref
     payload = b'{"v":1,"type":"state","rev":0,"status":"idle"}'
     return ref.build_body(key, "/api/webhook/" + fin["webhook_id"], fin["device_id"], seq, payload)
+
+
+async def test_remote_step_local_pairing_defaults_off(hass, env):
+    manager, client = env
+    result = await _to_remote_step(hass, manager, client)
+    assert result["step_id"] == "remote_default"
+    assert _default(result) is False
+    result = await _finish(hass, result)
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert result["options"] == {"allow_remote": False}
+    await hass.async_block_till_done()
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert entry.runtime_data.allow_remote is False
+    assert hass.data["webhook"][entry.data[CONF_WEBHOOK_ID]]["local_only"] is True
+    assert entry.data["paired_from_remote"] is False
+
+
+async def test_remote_step_nonlocal_pairing_defaults_on_and_saves(hass, env):
+    from unittest.mock import patch
+    manager, client = env
+    with patch("custom_components.itrend_player.pairing._is_local", return_value=False):
+        result = await _to_remote_step(hass, manager, client)
+    assert result["step_id"] == "remote_recommended"
+    assert _default(result) is True
+    result = await _finish(hass, result)
+    assert result["options"] == {"allow_remote": True}
+    await hass.async_block_till_done()
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    assert hass.data["webhook"][entry.data[CONF_WEBHOOK_ID]]["local_only"] is False
+    assert entry.data["paired_from_remote"] is True
+    # Hinweis (Reparatur) entfaellt, weil die Option an ist
+    assert ir.async_get(hass).async_get_issue(DOMAIN, f"remote_source_{entry.entry_id}") is None
+
+
+async def test_remote_step_user_can_override_recommendation(hass, env):
+    from unittest.mock import patch
+    manager, client = env
+    with patch("custom_components.itrend_player.pairing._is_local", return_value=False):
+        result = await _to_remote_step(hass, manager, client)
+    result = await _finish(hass, result, remote=False)
+    assert result["options"] == {"allow_remote": False}
+    await hass.async_block_till_done()
+    entry = hass.config_entries.async_entries(DOMAIN)[0]
+    # Kopplung von aussen + Option aus: Reparaturmeldung bleibt
+    assert ir.async_get(hass).async_get_issue(DOMAIN, f"remote_source_{entry.entry_id}") is not None
+
+
+async def test_remote_step_inherits_from_existing_entry(hass, env, vectors):
+    manager, client = env
+    existing = entry_from_vectors(vectors)
+    existing.add_to_hass(hass)
+    hass.config_entries.async_update_entry(existing, options={"allow_remote": True})
+    result = await _to_remote_step(hass, manager, client, name="TV 2")
+    assert result["step_id"] == "remote_inherit"
+    assert _default(result) is True
+    result = await _finish(hass, result)
+    assert result["options"] == {"allow_remote": True}
+
+
+async def test_remote_step_ignores_existing_entry_with_option_off(hass, env, vectors):
+    manager, client = env
+    existing = entry_from_vectors(vectors)
+    existing.add_to_hass(hass)
+    hass.config_entries.async_update_entry(existing, options={"allow_remote": False})
+    result = await _to_remote_step(hass, manager, client, name="TV 2")
+    assert result["step_id"] == "remote_default" and _default(result) is False
+
+
+async def test_reauth_keeps_option_value_as_default(hass, env, vectors):
+    manager, client = env
+    entry = entry_from_vectors(vectors)
+    entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(entry, options={"allow_remote": True})
+    await hass.config_entries.async_setup(entry.entry_id)
+    await hass.async_block_till_done()
+    result = await entry.start_reauth_flow(hass)
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    out = await AppSim(code=manager.active.code).pair(client)
+    assert out["status"] == 200
+    await hass.async_block_till_done()
+    for _ in range(3):
+        result = await hass.config_entries.flow.async_configure(result["flow_id"])
+        if result["type"] == FlowResultType.FORM:
+            break
+    assert result["step_id"] == "remote_inherit" and _default(result) is True
+    result = await _finish(hass, result)
+    assert result["reason"] == "reauth_successful"
+    await hass.async_block_till_done()
+    assert entry.options == {"allow_remote": True}
+    assert hass.data["webhook"][entry.data[CONF_WEBHOOK_ID]]["local_only"] is False
+
+
+def _default(result):
+    schema = result["data_schema"].schema
+    key = next(k for k in schema if k == "allow_remote")
+    return key.default()

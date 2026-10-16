@@ -11,6 +11,27 @@
       "retry": {
         "title": "Kopplung nicht abgeschlossen",
         "description": "Wählen Sie Senden, um einen neuen Code anzuzeigen. Wird ein Code gesperrt, ohne dass Sie ihn falsch eingegeben haben, versucht jemand im Netz zu stören. Erzeugen Sie einen neuen Code."
+      },
+      "remote_recommended": {
+        "title": "Netzwerkzugriff",
+        "description": "Die Kopplung kam von außerhalb Ihres Heimnetzes: empfohlen. Nötig, wenn Home Assistant über Domain, Proxy, Nabu Casa oder Hairpin-NAT erreicht wird; sonst kommen keine Meldungen an (die App zeigt 'nicht bestätigt (empty_body)'). Die Meldungen sind in jedem Fall signiert.",
+        "data": {
+          "allow_remote": "Auch Anfragen von außerhalb des Heimnetzes erlauben"
+        }
+      },
+      "remote_inherit": {
+        "title": "Netzwerkzugriff",
+        "description": "Von einem bestehenden Eintrag dieser Integration übernommen. Nötig, wenn Home Assistant über Domain, Proxy, Nabu Casa oder Hairpin-NAT erreicht wird; sonst kommen keine Meldungen an (die App zeigt 'nicht bestätigt (empty_body)'). Die Meldungen sind in jedem Fall signiert.",
+        "data": {
+          "allow_remote": "Auch Anfragen von außerhalb des Heimnetzes erlauben"
+        }
+      },
+      "remote_default": {
+        "title": "Netzwerkzugriff",
+        "description": "Die Kopplung kam aus Ihrem Heimnetz: meist nicht nötig. Nötig, wenn Home Assistant über Domain, Proxy, Nabu Casa oder Hairpin-NAT erreicht wird; sonst kommen keine Meldungen an (die App zeigt 'nicht bestätigt (empty_body)'). Die Meldungen sind in jedem Fall signiert.",
+        "data": {
+          "allow_remote": "Auch Anfragen von außerhalb des Heimnetzes erlauben"
+        }
       }
     },
     "progress": {
