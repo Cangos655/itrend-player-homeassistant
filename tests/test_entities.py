@@ -324,7 +324,7 @@ def test_translations_complete_and_consistent():
 
 def test_manifest():
     m = json.loads((PKG / "manifest.json").read_text(encoding="utf-8"))
-    assert m["domain"] == "itrend_player" and m["version"] == "0.2.2"
+    assert m["domain"] == "itrend_player" and m["version"] == "0.3.0"
     assert m["config_flow"] is True and m["integration_type"] == "device"
     assert m["iot_class"] == "local_push" and m["requirements"] == []
     assert m["dependencies"] == ["webhook", "http"]
@@ -574,3 +574,53 @@ def test_brand_images_exist_with_expected_sizes():
         assert (w2, h2) == (w1 * 2, h1 * 2) and 256 <= h2 <= 512
     for path in brand.glob("*.png"):
         assert path.stat().st_size < 60_000, path.name
+
+
+async def _now_playing(hass, env):
+    entry = env[0]
+    return er.async_get(hass).async_get_entity_id(
+        "sensor", DOMAIN, f"{entry.entry_id}_now_playing")
+
+
+async def test_now_playing_sensor(hass, env):
+    _e, _d, app, client, ids, _s = env
+    eid = await _now_playing(hass, env)
+    assert eid and hass.states.get(eid).state == STATE_UNAVAILABLE
+    # Titelfreigabe aus: Zustand ohne media
+    await send(hass, app, client, 1, {"v": 1, "type": "state", "rev": 1, "status": "playing"})
+    assert hass.states.get(eid).state == "\u2013"
+    assert hass.states.get(eid).attributes["icon"] == "mdi:play-circle-outline"
+    await send(hass, app, client, 2, {"v": 1, "type": "state", "rev": 2, "status": "playing",
+                                      "media": {"kind": "movie", "title": "Film X"}})
+    assert hass.states.get(eid).state == "Film X"
+    await send(hass, app, client, 3, EPISODE)
+    assert hass.states.get(eid).state == "Beispielserie, Season 1, Episode 2"
+    hass.config.language = "de"
+    await send(hass, app, client, 4, dict(EPISODE, rev=9))
+    assert hass.states.get(eid).state == "Beispielserie, Staffel 1, Folge 2"
+    hass.config.language = "tr"
+    await send(hass, app, client, 5, dict(EPISODE, rev=10))
+    assert hass.states.get(eid).state == "Beispielserie, Sezon 1, B\u00f6l\u00fcm 2"
+    await send(hass, app, client, 6, {"v": 1, "type": "state", "rev": 11, "status": "playing",
+                                      "media": {"kind": "live", "channel": "Sender 1", "title": "Nachrichten"}})
+    assert hass.states.get(eid).state == "Sender 1"
+    await send(hass, app, client, 7, {"v": 1, "type": "state", "rev": 12, "status": "playing",
+                                      "media": {"kind": "live", "title": "Nur Titel"}})
+    assert hass.states.get(eid).state == "Nur Titel"
+    await send(hass, app, client, 8, {"v": 1, "type": "state", "rev": 13, "status": "idle"})
+    assert hass.states.get(eid).state == "\u2013"
+    await send(hass, app, client, 9, dict(EPISODE, rev=14))
+    await send(hass, app, client, 10, {"v": 1, "type": "state", "rev": 15, "status": "closed"})
+    assert hass.states.get(eid).state == "\u2013"
+    assert hass.states.get(eid).attributes.get("entity_category") is None
+
+
+async def test_now_playing_episode_without_numbers(hass, env):
+    _e, _d, app, client, _i, _s = env
+    eid = await _now_playing(hass, env)
+    await send(hass, app, client, 1, {"v": 1, "type": "state", "rev": 1, "status": "playing",
+                                      "media": {"kind": "episode", "series": "Serie", "episode": 4}})
+    assert hass.states.get(eid).state == "Serie, Episode 4"
+    await send(hass, app, client, 2, {"v": 1, "type": "state", "rev": 2, "status": "playing",
+                                      "media": {"kind": "episode", "title": "Nur Titel"}})
+    assert hass.states.get(eid).state == "Nur Titel"

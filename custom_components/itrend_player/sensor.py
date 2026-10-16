@@ -32,6 +32,7 @@ async def async_setup_entry(
             ITrendSubscriptionSensor(device),
             ITrendConnectionsSensor(device),
             ITrendMaxConnectionsSensor(device),
+            ITrendNowPlayingSensor(device),
             ITrendPlaylistUpdatedSensor(device),
             ITrendPlaylistCountSensor(device, "live", "playlist_live"),
             ITrendPlaylistCountSensor(device, "movies", "playlist_movies"),
@@ -136,3 +137,40 @@ class ITrendPlaylistErrorSensor(ITrendEntity, SensorEntity):
     @property
     def native_value(self) -> str | None:
         return self._device.state.playlist_error
+
+
+_EPISODE_WORDS = {"de": ("Staffel", "Folge"), "tr": ("Sezon", "Bölüm"), "en": ("Season", "Episode")}
+NOTHING_PLAYING = "–"
+
+
+class ITrendNowPlayingSensor(ITrendEntity, SensorEntity):
+    """Titel des laufenden Inhalts als Text (sichtbar in der Sensorenliste der Geraeteseite).
+
+    Hinweis: HA speichert den Zustand eines Sensors im Recorder-Verlauf; ein Ausschluss je
+    Entitaet ist nur ueber die Recorder-Konfiguration (exclude) moeglich, siehe README.
+    """
+
+    _attr_translation_key = "now_playing"
+    _attr_icon = "mdi:play-circle-outline"
+
+    def __init__(self, device) -> None:  # type: ignore[no-untyped-def]
+        super().__init__(device, "now_playing")
+
+    @property
+    def native_value(self) -> str:
+        media = self._device.state.media
+        if not media:
+            return NOTHING_PLAYING
+        kind = media.get("kind")
+        if kind == "live":
+            return media.get("channel") or media.get("title") or NOTHING_PLAYING
+        if kind == "episode" and media.get("series"):
+            lang = (self.hass.config.language or "en").split("-")[0].lower()
+            season_word, episode_word = _EPISODE_WORDS.get(lang, _EPISODE_WORDS["en"])
+            parts = [media["series"]]
+            if "season" in media:
+                parts.append(f"{season_word} {media['season']}")
+            if "episode" in media:
+                parts.append(f"{episode_word} {media['episode']}")
+            return ", ".join(parts)
+        return media.get("title") or NOTHING_PLAYING

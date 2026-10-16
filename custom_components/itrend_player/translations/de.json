@@ -87,6 +87,9 @@
           "storage": "Speicherfehler",
           "other": "Sonstiger Fehler"
         }
+      },
+      "now_playing": {
+        "name": "Läuft gerade"
       }
     },
     "binary_sensor": {

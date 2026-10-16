@@ -87,6 +87,9 @@
           "storage": "Storage error",
           "other": "Other error"
         }
+      },
+      "now_playing": {
+        "name": "Now playing"
       }
     },
     "binary_sensor": {

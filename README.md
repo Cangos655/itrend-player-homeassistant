@@ -41,6 +41,7 @@ Ohne HACS: den Ordner `custom_components/itrend_player` in das Verzeichnis `conf
 | Entität | Inhalt |
 |---|---|
 | Media-Player | spielt, Pause, Puffern, Leerlauf, aus, nicht verfügbar; Titel, Sender, Typ, Serie/Staffel/Folge, Dauer, Position. Keine Steuerfunktionen in Stufe 1. |
+| Sensor Läuft gerade | Titel als Text: Film = Titel, Folge = „Serie, Staffel S, Folge E“, Live = Sender; sonst „–“. **Hinweis:** Home Assistant speichert den Zustand im Verlauf; zum Ausschließen `recorder: exclude: entity_globs: [sensor.*_now_playing]` (Entitäts-ID prüfen) in der Konfiguration setzen. |
 | Sensor App-Version | Diagnose |
 | Sensor Abo-Ablauf | Zeitstempel (Beginn des gemeldeten Tages), nur wenn die App ihn freigibt |
 | Sensor Verbindungen | aktive Verbindungen, Attribut `connections_max` |
@@ -111,6 +112,7 @@ Without HACS: copy the folder `custom_components/itrend_player` into `config/cus
 | Entity | Content |
 |---|---|
 | Media player | playing, paused, buffering, idle, off, unavailable; title, channel, type, series/season/episode, duration, position. No control features in stage 1. |
+| Now playing sensor | title as text: movie = title, episode = "Series, Season S, Episode E", live = channel; otherwise "–". **Note:** Home Assistant stores the state in its history; to exclude it set `recorder: exclude: entity_globs: [sensor.*_now_playing]` (check the entity ID). |
 | App version sensor | diagnostic |
 | Subscription expiry sensor | timestamp (start of the reported day), only if the app shares it |
 | Connections sensor | active connections, attribute `connections_max` |

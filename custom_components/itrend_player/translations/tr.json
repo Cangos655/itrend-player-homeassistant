@@ -87,6 +87,9 @@
           "storage": "Depolama hatası",
           "other": "Diğer hata"
         }
+      },
+      "now_playing": {
+        "name": "Şimdi oynatılıyor"
       }
     },
     "binary_sensor": {
