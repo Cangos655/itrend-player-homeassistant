@@ -6,6 +6,8 @@
 
 ![Home Assistant device card of iTrend Player next to the TV app / Home-Assistant-Gerätekarte von iTrend Player neben der TV-App](docs/images/ha-hero.webp)
 
+**iTrend Player: IPTV player for Fire TV & Android TV / IPTV-Player für Fire TV & Android TV** – [player.itrend24.de](https://player.itrend24.de)
+
 > Status: **Version 0.3.1**: secure pairing, receiving state (title, series, cover/channel logo, playlist status, subscription expiry, connections), sensors and events. Control (play/pause/…) comes later (stage 3) after a separate security review.
 > Status: **Version 0.3.1**: sichere Kopplung, Zustand empfangen (Titel, Serie, Cover/Senderlogo, Playlist-Status, Abo-Ablauf, Verbindungen), Sensoren und Ereignisse. Steuerung (Play/Pause/…) folgt später (Stufe 3) und braucht eine eigene Sicherheitsprüfung.
 
@@ -29,7 +31,7 @@ This integration shows in Home Assistant what iTrend Player is doing on your TV,
 ### Requirements
 
 - Home Assistant 2026.2 or newer (the icon appears from 2026.3 on; older versions show the default icon)
-- The iTrend Player app on your TV, in a version with Home Assistant support
+- The [iTrend Player app](https://player.itrend24.de) on your TV, in a version with Home Assistant support
 - TV and Home Assistant can reach each other over the network
 
 ### Installation via HACS (custom repository)
@@ -180,7 +182,7 @@ Diese Integration zeigt in Home Assistant, was iTrend Player auf deinem Fernsehe
 ### Voraussetzungen
 
 - Home Assistant 2026.2 oder neuer (das Symbol erscheint ab 2026.3, ältere Versionen zeigen das Standard-Icon)
-- Die App iTrend Player auf dem Fernseher, in einer Version mit Home-Assistant-Unterstützung
+- Die App [iTrend Player](https://player.itrend24.de) auf dem Fernseher, in einer Version mit Home-Assistant-Unterstützung
 - Fernseher und Home Assistant erreichen sich über das Netzwerk
 
 ### Installation über HACS (benutzerdefiniertes Repository)
