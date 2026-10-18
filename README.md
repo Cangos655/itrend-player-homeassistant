@@ -49,10 +49,12 @@ Without HACS: copy the folder `custom_components/itrend_player` into `config/cus
 3. In the app on the TV: **Settings > Home Assistant**, enter address and code and confirm the transmission notes.
 
    ![Home Assistant settings page in the TV app, status connected](docs/images/app-ha-page.webp)
-4. As soon as the app has paired, Home Assistant asks about network access (see "Entering the address correctly") and then creates the device (name taken from the app).
+4. As soon as the app has paired, Home Assistant asks about network access (see "Entering the address correctly"; the option is preset to off if the request comes from the local network) and then creates the device (name taken from the app, e.g. "iTrend Player (Living room TV)").
 5. In the app choose what to share (see "What is shared"). Until then nothing is sent.
 
    ![Sharing options in the app: app status, titles and channels, subscription expiry, covers, playlist status, each switchable](docs/images/app-ha-share.webp)
+
+   ![Same page with the sharing options switched on](docs/images/app-ha-share-on.webp)
 6. Several TVs: repeat; each TV gets its own device and its own secret.
 
 **Renew pairing:** if the app ended the pairing or it is no longer valid, Home Assistant offers **Reconfigure / Renew pairing** on the entry. Entities and history are kept.
@@ -66,7 +68,7 @@ The dialog shows the recommended address and further candidates.
 - **Include the port.** If Home Assistant does not run on port 80/443 (usually 8123), the port belongs in the address even if your `external_url` omits it, for example `http://192.168.1.20:8123` or `https://example.duckdns.org:8123`. If pairing does not work, try the address with the port.
 - **No `.local` names.** The apps do not resolve them; use the IP address or a domain name.
 - **`https` needs a domain name** that matches the certificate (an IP address will not work then).
-- **Domain, proxy, Nabu Casa or hairpin NAT:** if the TV reaches Home Assistant this way, the sender appears as a public address and Home Assistant by default drops the messages (the app shows "unconfirmed (`empty_body`)" and "App active" stays off). After pairing, the setup dialog asks for the option **Also allow requests from outside the home network** (preset to on if pairing came from outside or another entry uses the option). Change it later via entry > gear (Configure). Security hardly changes because every message is signed and sequence numbers and rate limits still apply.
+- **Domain, proxy, Nabu Casa or hairpin NAT:** if the TV reaches Home Assistant this way, the sender appears as a public address and Home Assistant by default drops the messages (the app shows "unconfirmed (`empty_body`)" and "App active" stays off). After pairing, the setup dialog asks for the option **Also allow requests from outside the home network** (preset to off if the request comes from the local network; preset to on if pairing came from outside or another entry uses the option). Change it later via entry > gear (Configure). Security hardly changes because every message is signed and sequence numbers and rate limits still apply.
 
 ### What is shared
 
@@ -105,21 +107,21 @@ After about **90 seconds** without a sign of life (three missed heartbeats) enti
 
 ### Dashboard example
 
-A media player card shows cover and title; a Markdown card shows the text of the "Now playing" sensor (check the entity IDs of your TV):
+A media player card shows cover and title; a Markdown card shows the text of the "Now playing" sensor (check the entity IDs of your TV; for the device "iTrend Player (Living room TV)" they start with `itrend_player_living_room_tv`):
 
 ```yaml
 type: vertical-stack
 cards:
   - type: media-control
-    entity: media_player.living_room_tv
+    entity: media_player.itrend_player_living_room_tv
   - type: markdown
     content: >
-      Now playing: {{ states('sensor.living_room_tv_now_playing') }}
+      Now playing: {{ states('sensor.itrend_player_living_room_tv_now_playing') }}
 ```
 
 ![Dashboard with media player card and "Now playing" card](docs/images/ha-dashboard-card.webp)
 
-The card "Control" on the device page shows only the state in its second line; title, series, season and episode are in the attributes and in a media player card on a dashboard.
+The "Controls" card on the device page (e.g. "iTrend Player (Living room TV)") shows only the state, such as "Playing"; title and cover are in the dashboard example above (series, season and episode are also in the attributes).
 
 ### Privacy and security
 
@@ -198,10 +200,12 @@ Ohne HACS: den Ordner `custom_components/itrend_player` in das Verzeichnis `conf
 3. In der App am Fernseher: **Einstellungen > Home Assistant**, Adresse und Code eingeben, die Hinweise zur Übertragung bestätigen.
 
    ![Einstellungsseite „Home Assistant“ in der App am Fernseher, Status verbunden](docs/images/app-ha-page.webp)
-4. Sobald die App gekoppelt hat, fragt Home Assistant nach dem Netzwerkzugriff (siehe „Adresse richtig angeben“) und legt dann das Gerät an (Name aus der App).
+4. Sobald die App gekoppelt hat, fragt Home Assistant nach dem Netzwerkzugriff (siehe „Adresse richtig angeben“; die Option ist aus vorbelegt, wenn die Anfrage aus dem lokalen Netz kommt) und legt dann das Gerät an (Name aus der App, z. B. „iTrend Player (Wohnzimmer-TV)“).
 5. In der App festlegen, was gesendet wird (siehe „Was freigegeben wird“). Bis dahin wird nichts gesendet.
 
    ![Freigaben in der App: App-Status, Titel und Sender, Abo-Ablauf, Cover, Playlist-Status, einzeln schaltbar](docs/images/app-ha-share.webp)
+
+   ![Dieselbe Seite mit eingeschalteten Freigaben](docs/images/app-ha-share-on.webp)
 6. Mehrere Fernseher: Schritte wiederholen; jeder Fernseher hat ein eigenes Gerät und ein eigenes Geheimnis.
 
 **Kopplung erneuern:** Hat die App die Kopplung beendet oder ist sie ungültig, bietet Home Assistant am Eintrag **Neu konfigurieren / Kopplung erneuern** an. Entitäten und Verlauf bleiben erhalten.
@@ -215,7 +219,7 @@ Der Dialog zeigt die empfohlene Adresse und weitere Kandidaten.
 - **Mit Port.** Läuft Home Assistant nicht auf Port 80/443 (meist 8123), gehört der Port in die Adresse, auch wenn deine `external_url` ihn nicht nennt, z. B. `http://192.168.1.20:8123` oder `https://beispiel.duckdns.org:8123`. Funktioniert die Kopplung nicht, probiere die Adresse mit Port.
 - **Keine `.local`-Namen.** Die Apps lösen sie nicht auf; nutze die IP-Adresse oder einen Domainnamen.
 - **`https` braucht einen Domainnamen**, der zum Zertifikat passt (eine IP-Adresse funktioniert dann nicht).
-- **Domain, Proxy, Nabu Casa oder Hairpin-NAT:** Erreicht der Fernseher Home Assistant auf diesem Weg, erscheint der Absender als öffentliche Adresse, und Home Assistant verwirft die Meldungen standardmäßig (die App zeigt „nicht bestätigt (`empty_body`)“, „App aktiv“ bleibt aus). Der Einrichtungsdialog fragt nach der Kopplung nach der Option **Auch Anfragen von außerhalb des Heimnetzes erlauben** (vorbelegt „an“, wenn die Kopplung von außen kam oder ein anderer Eintrag die Option nutzt). Nachträglich ändern: Eintrag > Zahnrad (Konfigurieren). Die Sicherheit ändert sich kaum, da jede Meldung signiert ist und Sequenznummern und Rate-Limits weiter gelten.
+- **Domain, Proxy, Nabu Casa oder Hairpin-NAT:** Erreicht der Fernseher Home Assistant auf diesem Weg, erscheint der Absender als öffentliche Adresse, und Home Assistant verwirft die Meldungen standardmäßig (die App zeigt „nicht bestätigt (`empty_body`)“, „App aktiv“ bleibt aus). Der Einrichtungsdialog fragt nach der Kopplung nach der Option **Auch Anfragen von außerhalb des Heimnetzes erlauben** (aus vorbelegt, wenn die Anfrage aus dem lokalen Netz kommt; an vorbelegt, wenn die Kopplung von außen kam oder ein anderer Eintrag die Option nutzt). Nachträglich ändern: Eintrag > Zahnrad (Konfigurieren). Die Sicherheit ändert sich kaum, da jede Meldung signiert ist und Sequenznummern und Rate-Limits weiter gelten.
 
 ### Was freigegeben wird
 
@@ -254,21 +258,21 @@ Nach etwa **90 Sekunden** ohne Lebenszeichen (drei verpasste Herzschläge) werde
 
 ### Dashboard-Beispiel
 
-Eine Media-Player-Karte zeigt Cover und Titel; eine Markdown-Karte zeigt den Text des Sensors „Läuft gerade“ (Entitäts-IDs deines Fernsehers prüfen):
+Eine Media-Player-Karte zeigt Cover und Titel; eine Markdown-Karte zeigt den Text des Sensors „Läuft gerade“ (Entitäts-IDs deines Fernsehers prüfen; beim Gerät „iTrend Player (Wohnzimmer-TV)“ beginnen sie mit `itrend_player_wohnzimmer_tv`):
 
 ```yaml
 type: vertical-stack
 cards:
   - type: media-control
-    entity: media_player.wohnzimmer_tv
+    entity: media_player.itrend_player_wohnzimmer_tv
   - type: markdown
     content: >
-      Läuft gerade: {{ states('sensor.wohnzimmer_tv_now_playing') }}
+      Läuft gerade: {{ states('sensor.itrend_player_wohnzimmer_tv_now_playing') }}
 ```
 
 ![Dashboard mit Media-Player-Karte und Karte „Läuft gerade“](docs/images/ha-dashboard-card.webp)
 
-Die Karte „Steuerung“ auf der Geräteseite zeigt in der zweiten Zeile nur den Zustand; Titel, Serie, Staffel und Folge stehen in den Attributen und in einer Media-Player-Karte im Dashboard.
+Die Karte „Steuerung“ auf der Geräteseite (z. B. „iTrend Player (Wohnzimmer-TV)“) zeigt bei „Wiedergabe“ nur den Zustand; Titel und Cover stehen im Dashboard-Beispiel oben (Serie, Staffel und Folge zusätzlich in den Attributen).
 
 ### Datenschutz und Sicherheit
 
