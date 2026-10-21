@@ -1,9 +1,6 @@
 {
   "domain": "itrend_player",
   "name": "iTrend Player",
-  "categories": [
-    "media_entertainment.tv_streaming"
-  ],
   "codeowners": [
     "@Cangos655"
   ],
