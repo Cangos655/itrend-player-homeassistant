@@ -1,6 +1,9 @@
 {
   "domain": "itrend_player",
   "name": "iTrend Player",
+  "categories": [
+    "media_entertainment.tv_streaming"
+  ],
   "codeowners": [
     "@Cangos655"
   ],
@@ -14,5 +17,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/Cangos655/itrend-player-homeassistant/issues",
   "requirements": [],
-  "version": "0.3.1"
+  "version": "0.3.2"
 }
