@@ -1,0 +1,50 @@
+name: Release ZIP
+
+# Builds itrend_player.zip from custom_components/itrend_player and attaches it
+# to the GitHub release. HACS downloads this file (zip_release), and GitHub
+# counts the downloads of the attached file.
+#
+# - Runs automatically when a release is published.
+# - Can be started manually for an existing release tag (e.g. v0.3.1) to
+#   attach the ZIP to older releases as well.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing release tag to build the ZIP from and attach it to (e.g. v0.3.1)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Build ZIP (integration files at the ZIP root)
+        run: |
+          cd custom_components/itrend_player
+          zip -r ../../itrend_player.zip . -x "*.pyc" -x "*__pycache__/*"
+
+      - name: Check ZIP content
+        run: |
+          unzip -Z1 itrend_player.zip > zip_files.txt
+          cat zip_files.txt
+          grep -qx "manifest.json" zip_files.txt
+          grep -qx "__init__.py" zip_files.txt
+
+      - name: Attach ZIP to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$TAG" itrend_player.zip --clobber
