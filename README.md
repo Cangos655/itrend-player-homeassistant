@@ -8,8 +8,8 @@
 
 **iTrend Player: IPTV player for Fire TV & Android TV / IPTV-Player für Fire TV & Android TV** – [player.itrend24.de](https://player.itrend24.de)
 
-> Status: **Version 0.3.2**: secure pairing, receiving state (title, series, cover/channel logo, playlist status, subscription expiry, connections), sensors and events. Control (play/pause/…) comes later (stage 3) after a separate security review.
-> Status: **Version 0.3.2**: sichere Kopplung, Zustand empfangen (Titel, Serie, Cover/Senderlogo, Playlist-Status, Abo-Ablauf, Verbindungen), Sensoren und Ereignisse. Steuerung (Play/Pause/…) folgt später (Stufe 3) und braucht eine eigene Sicherheitsprüfung.
+> Status: **Version 0.3.3**: secure pairing, receiving state (title, series, cover/channel logo, playlist status, subscription expiry, connections), sensors and events. Control (play/pause/…) comes later (stage 3) after a separate security review.
+> Status: **Version 0.3.3**: sichere Kopplung, Zustand empfangen (Titel, Serie, Cover/Senderlogo, Playlist-Status, Abo-Ablauf, Verbindungen), Sensoren und Ereignisse. Steuerung (Play/Pause/…) folgt später (Stufe 3) und braucht eine eigene Sicherheitsprüfung.
 
 ---
 ## English
