@@ -164,6 +164,8 @@ pytest
 
 License: MIT.
 
+Enjoying the integration? [Support me via PayPal](https://www.paypal.me/itrend24) or give the repo a ⭐.
+
 ---
 
 ## Deutsch
@@ -317,5 +319,7 @@ pytest
 ```
 
 Lizenz: MIT.
+
+Gefällt dir die Integration? [Unterstütze mich per PayPal](https://www.paypal.me/itrend24) oder gib dem Repo einen ⭐.
 
 ---
