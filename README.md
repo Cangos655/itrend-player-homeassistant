@@ -34,16 +34,19 @@ This integration shows in Home Assistant what iTrend Player is doing on your TV,
 - The [iTrend Player app](https://player.itrend24.de) on your TV, in a version with Home Assistant support
 - TV and Home Assistant can reach each other over the network
 
-### Installation via HACS
+### Installation
 
-iTrend Player is in the HACS default list.
+**Home Assistant 2026.11 or newer: Marketplace**
+
+1. Open **Settings > Marketplace** and search for **iTrend Player**.
+2. Start the installation. You then usually land directly in the setup, without a restart.
+
+**Older versions: HACS**
 
 1. Open HACS and search for **iTrend Player**.
 2. Download it and restart Home Assistant.
 
-Alternatively, add it as a custom repository: HACS menu (three dots) > **Custom repositories**, address `https://github.com/Cangos655/itrend-player-homeassistant`, category **Integration**.
-
-Without HACS: copy the folder `custom_components/itrend_player` into `config/custom_components/` of your Home Assistant installation and restart.
+**Manual copy:** copy the folder `custom_components/itrend_player` into `config/custom_components/` of your Home Assistant installation and restart.
 
 ### Pairing step by step
 
@@ -190,16 +193,19 @@ Diese Integration zeigt in Home Assistant, was iTrend Player auf deinem Fernsehe
 - Die App [iTrend Player](https://player.itrend24.de) auf dem Fernseher, in einer Version mit Home-Assistant-Unterstützung
 - Fernseher und Home Assistant erreichen sich über das Netzwerk
 
-### Installation über HACS
+### Installation
 
-iTrend Player steht in der Standardliste von HACS.
+**Home Assistant 2026.11 oder neuer: Marketplace**
+
+1. **Einstellungen > Marketplace** öffnen und nach **iTrend Player** suchen.
+2. Die Installation starten. Danach landest du in der Regel direkt in der Einrichtung, ohne Neustart.
+
+**Ältere Versionen: HACS**
 
 1. HACS öffnen und nach **iTrend Player** suchen.
 2. Herunterladen und Home Assistant neu starten.
 
-Alternativ als benutzerdefiniertes Repository: HACS-Menü (drei Punkte) > **Benutzerdefinierte Repositories**, Adresse `https://github.com/Cangos655/itrend-player-homeassistant`, Kategorie **Integration**.
-
-Ohne HACS: den Ordner `custom_components/itrend_player` in das Verzeichnis `config/custom_components/` deiner Home-Assistant-Installation kopieren und neu starten.
+**Manuelle Kopie:** den Ordner `custom_components/itrend_player` in das Verzeichnis `config/custom_components/` deiner Home-Assistant-Installation kopieren und neu starten.
 
 ### Kopplung Schritt für Schritt
 
