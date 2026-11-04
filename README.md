@@ -2,7 +2,7 @@
 
 [English](#english) | [Deutsch](#deutsch)
 
-![HACS custom](https://img.shields.io/badge/HACS-Custom-41BDF5) ![Version](https://img.shields.io/github/v/release/Cangos655/itrend-player-homeassistant?label=version&color=blue) ![Home Assistant 2026.2+](https://img.shields.io/badge/Home%20Assistant-2026.2%2B-18bcf2)
+[![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5)](https://github.com/hacs/default) ![Version](https://img.shields.io/github/v/release/Cangos655/itrend-player-homeassistant?label=version&color=blue) ![Home Assistant 2026.2+](https://img.shields.io/badge/Home%20Assistant-2026.2%2B-18bcf2)
 
 ![Home Assistant device card of iTrend Player next to the TV app / Home-Assistant-Gerätekarte von iTrend Player neben der TV-App](docs/images/ha-hero.webp)
 
@@ -34,11 +34,14 @@ This integration shows in Home Assistant what iTrend Player is doing on your TV,
 - The [iTrend Player app](https://player.itrend24.de) on your TV, in a version with Home Assistant support
 - TV and Home Assistant can reach each other over the network
 
-### Installation via HACS (custom repository)
+### Installation via HACS
 
-1. Open HACS, menu (three dots) > **Custom repositories**.
-2. Add `https://github.com/Cangos655/itrend-player-homeassistant`, category **Integration**.
-3. Search **iTrend Player** in HACS, download it, restart Home Assistant.
+iTrend Player is in the HACS default list.
+
+1. Open HACS and search for **iTrend Player**.
+2. Download it and restart Home Assistant.
+
+Alternatively, add it as a custom repository: HACS menu (three dots) > **Custom repositories**, address `https://github.com/Cangos655/itrend-player-homeassistant`, category **Integration**.
 
 Without HACS: copy the folder `custom_components/itrend_player` into `config/custom_components/` of your Home Assistant installation and restart.
 
@@ -185,11 +188,14 @@ Diese Integration zeigt in Home Assistant, was iTrend Player auf deinem Fernsehe
 - Die App [iTrend Player](https://player.itrend24.de) auf dem Fernseher, in einer Version mit Home-Assistant-Unterstützung
 - Fernseher und Home Assistant erreichen sich über das Netzwerk
 
-### Installation über HACS (benutzerdefiniertes Repository)
+### Installation über HACS
 
-1. HACS öffnen, Menü (drei Punkte) > **Benutzerdefinierte Repositories**.
-2. Adresse `https://github.com/Cangos655/itrend-player-homeassistant` eintragen, Kategorie **Integration**, hinzufügen.
-3. **iTrend Player** in HACS suchen, herunterladen, Home Assistant neu starten.
+iTrend Player steht in der Standardliste von HACS.
+
+1. HACS öffnen und nach **iTrend Player** suchen.
+2. Herunterladen und Home Assistant neu starten.
+
+Alternativ als benutzerdefiniertes Repository: HACS-Menü (drei Punkte) > **Benutzerdefinierte Repositories**, Adresse `https://github.com/Cangos655/itrend-player-homeassistant`, Kategorie **Integration**.
 
 Ohne HACS: den Ordner `custom_components/itrend_player` in das Verzeichnis `config/custom_components/` deiner Home-Assistant-Installation kopieren und neu starten.
 
